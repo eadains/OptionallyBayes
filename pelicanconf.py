@@ -10,7 +10,7 @@ PATH = 'content'
 MAIN_MENU = True
 COPYRIGHT_NAME = 'Erik Dains'
 COPYRIGHT_YEAR = '2020'
-SITELOGO = SITEURL + '/images/integral_logo.png'
+# SITELOGO = SITEURL + '/images/integral_logo.png'
 
 TIMEZONE = 'America/Chicago'
 
