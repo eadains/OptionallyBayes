@@ -1,0 +1,30 @@
+Title: Purpose and Decisions
+Date: 11/24/2020
+Category: Meta
+Slug: first_post
+Authors: Erik Dains
+Summary: My first post explaining the purpose of my blog as well as my first decisions about my trading infrastructure.
+
+Hi everyone! This is my first post on this blog. I intend to use this as a space to chronicle my trading adventures.
+
+The first big step: choosing a trading platform/infrastructure. My decision is contentious, even to me.
+
+I've decided I'm going to use [Quantconnect](https://www.quantconnect.com/) for my trading and backtesting needs. This is for several reasons.
+
+Firstly, data is expensive and painful. I've had some experience in the past trying to create a survivorship-free equities dataset, and it's hard.
+You have to deal with mergers/acquisitions, splits/dividends, spin-offs, symbol changes, bad data, the list goes on. I'm only a single person and it takes a lot of work.
+It's also expensive. I'm a college student with limited resources to pay monthly fees for good data. Quantconnect goes even further with intraday data. They also have options
+data, forex, and crypto. It's far more than I could ever manage or get on my own.
+
+Next, it removes a lot of work. Again I'm only one person. I've debated creating a backtesting/trading framework from scratch. There's a lot of upsides.
+As I'll explain, Quantconnect leaves a lot to be desired for the kind of analysis I'd ideally like to be doing. But at the end of the day I'd rather get something deployed,
+even if it's not "optimal." I have a tendency to get stuck in perfection ruts where I end up doing nothing because I focus too hard on doing the best thing possible.
+Using a preexisting platform that already manages data, backtesting, and even live trading, will save me from that. 
+
+Lastly, live trading and product variety. With Quantonnect, I can easily deploy my strategies live with minimal extra work. They manage the servers, which I've heard are quite
+reliable, and I can move on with my research. Minimal stress. Also, the ability to trade multiple products will eventually become helpful as I move to diversify my portfolio.
+
+I think it's a good choice. With the recent death of Quantopian, they are the best option. Hopefully, with their monetization scheme, they'll be around for a while. The community
+also seems nice.
+
+With that decided, it's on to research! Coming in my next post will be my first few stratgies, which I intend to be pretty simple factor rankings.
