@@ -286,37 +286,39 @@
 <span class="nb">print</span><span class="p">(</span><span class="n">stds</span><span class="p">)</span>
 </code></pre></div>
 
-<p>[0.00000000e+00 3.12250226e-17 0.00000000e+00 1.24900090e-16
- 0.00000000e+00 0.00000000e+00 0.00000000e+00 4.16333634e-17
- 0.00000000e+00 0.00000000e+00 0.00000000e+00 2.08166817e-17
- 1.66533454e-16 1.38777878e-16 1.66533454e-16 0.00000000e+00
- 0.00000000e+00 1.24900090e-16 2.42861287e-17]</p>
+<div class="highlight"><pre><span></span><code><span class="err">    [0.00000000e+00 3.12250226e-17 0.00000000e+00 1.24900090e-16</span>
+<span class="err">     0.00000000e+00 0.00000000e+00 0.00000000e+00 4.16333634e-17</span>
+<span class="err">     0.00000000e+00 0.00000000e+00 0.00000000e+00 2.08166817e-17</span>
+<span class="err">     1.66533454e-16 1.38777878e-16 1.66533454e-16 0.00000000e+00</span>
+<span class="err">     0.00000000e+00 1.24900090e-16 2.42861287e-17]</span>
+</code></pre></div>
+
 <p>Looks like the optimization converges to the same values every time regardless of starting point! This means it's finding the true minimum (or maximum in this case). Let's look the at the weights for each symbol.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># I&#39;ll just grab the last optimization result this way</span>
 <span class="n">weights_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">returns</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">weights_series</span><span class="p">)</span>
 </code></pre></div>
 
-<div class="highlight"><pre><span></span><code><span class="err">symbol</span>
-<span class="err">EMB TYLA2YBBA25H     0.0000</span>
-<span class="err">HYG TRP5FE4RZXPH     0.0215</span>
-<span class="err">IFGL TXOSBV8QR5UT    0.0000</span>
-<span class="err">IGOV U9K4CFZZYLID    0.0586</span>
-<span class="err">IYR RVLEALAHHC2T     0.0000</span>
-<span class="err">SUB U7GAX8U02I5H     0.2759</span>
-<span class="err">TIP SU8XP1RCF8F9     0.0000</span>
-<span class="err">VB SVS2QA8SPHET      0.0336</span>
-<span class="err">VCIT UHVG8V7B7YAT    0.0000</span>
-<span class="err">VCLT UHVG8V7B7YAT    0.0000</span>
-<span class="err">VCSH UHVG8V7B7YAT    0.0000</span>
-<span class="err">VEA TULITAWO3WPX     0.0265</span>
-<span class="err">VGIT UHVG8V7B7YAT    0.1150</span>
-<span class="err">VGLT UHVG8V7B7YAT    0.1868</span>
-<span class="err">VGSH UHVG8V7B7YAT    0.1825</span>
-<span class="err">VMBS UHVG8V7B7YAT    0.0000</span>
-<span class="err">VO SVS2QA8SPHET      0.0000</span>
-<span class="err">VV SVS2QA8SPHET      0.0817</span>
-<span class="err">VWO T6UUS5E5P1ET     0.0179</span>
+<div class="highlight"><pre><span></span><code><span class="err">    symbol</span>
+<span class="err">    EMB     0.0000</span>
+<span class="err">    HYG     0.0215</span>
+<span class="err">    IFGL    0.0000</span>
+<span class="err">    IGOV    0.0586</span>
+<span class="err">    IYR     0.0000</span>
+<span class="err">    SUB     0.2759</span>
+<span class="err">    TIP     0.0000</span>
+<span class="err">    VB      0.0336</span>
+<span class="err">    VCIT    0.0000</span>
+<span class="err">    VCLT    0.0000</span>
+<span class="err">    VCSH    0.0000</span>
+<span class="err">    VEA     0.0265</span>
+<span class="err">    VGIT    0.1150</span>
+<span class="err">    VGLT    0.1868</span>
+<span class="err">    VGSH    0.1825</span>
+<span class="err">    VMBS    0.0000</span>
+<span class="err">    VO      0.0000</span>
+<span class="err">    VV      0.0817</span>
+<span class="err">    VWO     0.0179</span>
 </code></pre></div>
 
 <div class="highlight"><pre><span></span><code><span class="c1"># Let&#39;s drop everything with a zero weight</span>
@@ -325,25 +327,23 @@
 <span class="nb">print</span><span class="p">(</span><span class="n">final_weights</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
 </code></pre></div>
 
-<div class="highlight"><pre><span></span><code><span class="err">symbol</span>
-<span class="err">SUB U7GAX8U02I5H     0.2759</span>
-<span class="err">VGLT UHVG8V7B7YAT    0.1868</span>
-<span class="err">VGSH UHVG8V7B7YAT    0.1825</span>
-<span class="err">VGIT UHVG8V7B7YAT    0.1150</span>
-<span class="err">VV SVS2QA8SPHET      0.0817</span>
-<span class="err">IGOV U9K4CFZZYLID    0.0586</span>
-<span class="err">VB SVS2QA8SPHET      0.0336</span>
-<span class="err">VEA TULITAWO3WPX     0.0265</span>
-<span class="err">HYG TRP5FE4RZXPH     0.0215</span>
-<span class="err">VWO T6UUS5E5P1ET     0.0179</span>
-<span class="c">dtype: float64</span>
+<div class="highlight"><pre><span></span><code><span class="err">    SUB     0.2759</span>
+<span class="err">    VGLT    0.1868</span>
+<span class="err">    VGSH    0.1825</span>
+<span class="err">    VGIT    0.1150</span>
+<span class="err">    VV      0.0817</span>
+<span class="err">    IGOV    0.0586</span>
+<span class="err">    VB      0.0336</span>
+<span class="err">    VEA     0.0265</span>
+<span class="err">    HYG     0.0215</span>
+<span class="err">    VWO     0.0179</span>
 </code></pre></div>
 
 <div class="highlight"><pre><span></span><code><span class="c1"># Confirm everything sums to 1. Looks good!</span>
 <span class="n">final_weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 </code></pre></div>
 
-<div class="highlight"><pre><span></span><code><span class="err">0.9999999999999999</span>
+<div class="highlight"><pre><span></span><code><span class="err">    0.9999999999999999</span>
 </code></pre></div>
 
 <h1>Backtest Results</h1>
@@ -639,7 +639,6 @@
     </tr>
   </tbody>
 </table>
-<p>121 rows × 19 columns</p>
 </div>
 
 <p>Let's take a closer look at a particular ETFs portfolio allocation over time. I'm going to use VGSH for this because it's the least risky, most cash-like instrument under consideration.</p>
@@ -682,12 +681,11 @@
            <span class="s1">&#39;MAR Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">mar_ratio</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
 </code></pre></div>
 
-<div class="highlight"><pre><span></span><code><span class="err">Total Return        29.77%</span>
-<span class="err">CAGR                 2.94%</span>
-<span class="err">Sharpe Ratio          1.15</span>
-<span class="err">Maximum Drawdown     7.07%</span>
-<span class="err">MAR Ratio             0.42</span>
-<span class="c">dtype: object</span>
+<div class="highlight"><pre><span></span><code><span class="err">    Total Return        29.77%</span>
+<span class="err">    CAGR                 2.94%</span>
+<span class="err">    Sharpe Ratio          1.15</span>
+<span class="err">    Maximum Drawdown     7.07%</span>
+<span class="err">    MAR Ratio             0.42</span>
 </code></pre></div>
 
 <p>Let's compare that to just US large cap stocks over the same period.</p>
@@ -706,12 +704,11 @@
            <span class="s1">&#39;MAR Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">mar_ratio</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
 </code></pre></div>
 
-<div class="highlight"><pre><span></span><code><span class="err">Total Return        267.74%</span>
-<span class="err">CAGR                 15.57%</span>
-<span class="err">Sharpe Ratio           0.84</span>
-<span class="err">Maximum Drawdown     34.28%</span>
-<span class="err">MAR Ratio              0.45</span>
-<span class="c">dtype: object</span>
+<div class="highlight"><pre><span></span><code><span class="err">    Total Return        267.74%</span>
+<span class="err">    CAGR                 15.57%</span>
+<span class="err">    Sharpe Ratio           0.84</span>
+<span class="err">    Maximum Drawdown     34.28%</span>
+<span class="err">    MAR Ratio              0.45</span>
 </code></pre></div>
 
 <p>Looks like the maximum diversification portfolio achieves a higher sharpe ratio! Although it comes at the cost of signficantly lower total returns. More interesting is the MAR ratio, defined as the CAGR over the maximum drawdown. This is a useful ratio because it gauges how much extra return you are getting for taking on heavier drawdown risk. It looks like large cap US stocks win out on this metric.</p>
@@ -738,12 +735,11 @@
            <span class="s1">&#39;MAR Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">mar_ratio</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
 </code></pre></div>
 
-<div class="highlight"><pre><span></span><code><span class="err">Total Return        267.74%</span>
-<span class="err">CAGR                 15.57%</span>
-<span class="err">Sharpe Ratio           0.84</span>
-<span class="err">Maximum Drawdown     99.97%</span>
-<span class="err">MAR Ratio              0.16</span>
-<span class="c">dtype: object</span>
+<div class="highlight"><pre><span></span><code><span class="err">    Total Return        267.74%</span>
+<span class="err">    CAGR                 15.57%</span>
+<span class="err">    Sharpe Ratio           0.84</span>
+<span class="err">    Maximum Drawdown     99.97%</span>
+<span class="err">    MAR Ratio              0.16</span>
 </code></pre></div>
 
 <p>As you can see the total return, CAGR, and Sharpe ratio are all the same as the original return series! But the maximum drawdown is <em>significantly</em> higher. Obviously this is a worst case scenario, but it shows how drawdowns can drastically affect your portfolio performance over time. Volatility by itself doesn't reflect all kinds of risk because it ignores path dependency. This again is a topic worth covering in more detail at a later date.</p>
