@@ -1,0 +1,804 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/stylesheet/style.min.css">
+
+
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+          href="https://eadains.github.io/OptionallyBayes/theme/pygments/github.min.css">
+
+
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/solid.css">
+
+
+
+
+
+
+
+<meta name="author" content="Erik Dains" />
+<meta name="description" content="Constructed a portfolio from a selection of ETFs to maximize the diversification ratio" />
+<meta name="keywords" content="">
+
+
+<meta property="og:site_name" content="Optionally Bayes"/>
+<meta property="og:title" content="A Most Diversified ETF Portfolio"/>
+<meta property="og:description" content="Constructed a portfolio from a selection of ETFs to maximize the diversification ratio"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="https://eadains.github.io/OptionallyBayes/mdp_etf_portfolio.html"/>
+<meta property="og:type" content="article"/>
+<meta property="article:published_time" content="2020-01-07 00:00:00-06:00"/>
+<meta property="article:modified_time" content=""/>
+<meta property="article:author" content="https://eadains.github.io/OptionallyBayes/author/erik-dains.html">
+<meta property="article:section" content="Portfolio Optimization"/>
+<meta property="og:image" content="">
+
+  <title>Optionally Bayes &ndash; A Most Diversified ETF Portfolio</title>
+
+</head>
+<body class="light-theme">
+  <aside>
+    <div>
+      <a href="https://eadains.github.io/OptionallyBayes">
+        <img src="https://eadains.github.io/OptionallyBayes/theme/img/profile.png" alt="Optionally Bayes" title="Optionally Bayes">
+      </a>
+
+      <h1>
+        <a href="https://eadains.github.io/OptionallyBayes">Optionally Bayes</a>
+      </h1>
+
+<p>My journey in stock market trading and Bayesian statistics.</p>
+
+
+      <ul class="social">
+          <li>
+            <a  class="sc-github" href="https://github.com/eadains" target="_blank">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-instagram" href="https://www.instagram.com/erikdains/" target="_blank">
+              <i class="fab fa-instagram"></i>
+            </a>
+          </li>
+      </ul>
+    </div>
+
+  </aside>
+  <main>
+
+    <nav>
+      <a href="https://eadains.github.io/OptionallyBayes">Home</a>
+
+      <a href="archives.html">Archives</a>
+      <a href="categories.html">Categories</a>
+      <a href="tags.html">Tags</a>
+
+
+    </nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="mdp_etf_portfolio">A Most Diversified ETF Portfolio</h1>
+    <p>
+      Posted on Tue 07 January 2020 in <a href="https://eadains.github.io/OptionallyBayes/category/portfolio-optimization.html">Portfolio Optimization</a>
+
+    </p>
+  </header>
+
+
+  <div>
+    <hr>
+<p>Alright, with this post I'm going to start a series on portfolio optimization techniques! This is one of my favorite topics in finance. This post is going to construct a portfolio based on the diversification ratio, which is outlined in the papers linked below. The basic idea is to maximize the Diversification ratio, which is defined as the weighted average volatilities of assets in the portfolio divided by the total portfolio volatility. This makes intuitive sense, by increasing diversification we lower portfolio volatility compared to the average volatility of the assets that make it up.</p>
+<p>Choueifaty, Y., &amp; Coignard, Y. (2008). Toward Maximum Diversification. The Journal of Portfolio Management, 40-51. doi:https://doi.org/10.3905/JPM.2008.35.1.40</p>
+<p>Choueifaty, Y., Reynier, J., &amp; Froidure, T. (2013). Properties of the Most Diversified Portfolio. Journal of Investment Strategies, 49-70. doi:http://doi.org/10.2139/ssrn.1895459</p>
+<h1>The assets</h1>
+<hr>
+<p>I'm going to mainly focus on Vanguard ETFs as they have the lowest fees. For anything they don't offer, I'm using iShares. I'm also limiting myself to funds with inception dates &gt;10 years ago for stability.</p>
+<h3>Here's the list:</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VGSH</td>
+<td>Short-term Treasury</td>
+</tr>
+<tr>
+<td>VGIT</td>
+<td>Mid-term Treasury</td>
+</tr>
+<tr>
+<td>VGLT</td>
+<td>Long-term Treasury</td>
+</tr>
+<tr>
+<td>TIP</td>
+<td>TIPS Treasury Bonds</td>
+</tr>
+<tr>
+<td>VMBS</td>
+<td>Agency MBS</td>
+</tr>
+<tr>
+<td>SUB</td>
+<td>Municipal Bonds</td>
+</tr>
+<tr>
+<td>VCSH</td>
+<td>Short-term Investment Grade Corporate Bonds</td>
+</tr>
+<tr>
+<td>VCIT</td>
+<td>Mid-term Investment Grade Corporate Bonds</td>
+</tr>
+<tr>
+<td>VCLT</td>
+<td>Long-term Investment Grade Corporate Bonds</td>
+</tr>
+<tr>
+<td>HYG</td>
+<td>High-yield Corporate Bonds</td>
+</tr>
+<tr>
+<td>EMB</td>
+<td>Emerging Markets Bonds</td>
+</tr>
+<tr>
+<td>IGOV</td>
+<td>International Treasuries</td>
+</tr>
+<tr>
+<td>VV</td>
+<td>Large Cap US Stocks</td>
+</tr>
+<tr>
+<td>VO</td>
+<td>Mid-Cap US Stocks</td>
+</tr>
+<tr>
+<td>VB</td>
+<td>Small-Cap US Stocks</td>
+</tr>
+<tr>
+<td>VWO</td>
+<td>Emerging Markets Stocks</td>
+</tr>
+<tr>
+<td>VEA</td>
+<td>Non-US Developed Markets Stocks</td>
+</tr>
+<tr>
+<td>IYR</td>
+<td>US Real Estate</td>
+</tr>
+<tr>
+<td>IFGL</td>
+<td>Non-US Real Estate</td>
+</tr>
+</tbody>
+</table>
+<h1>Data</h1>
+<hr>
+<p>All of this is the code to fetch historical data from QuantConnect and calculate returns.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;VGSH&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VGIT&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VGLT&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TIP&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VMBS&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;SUB&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VCSH&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VCIT&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VCLT&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;HYG&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;EMB&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;IGOV&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VV&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VO&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VB&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VWO&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VEA&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;IYR&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;IFGL&#39;</span><span class="p">]</span>
+
+<span class="n">qb</span> <span class="o">=</span> <span class="n">QuantBook</span><span class="p">()</span>
+<span class="n">symbols_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">symbol</span><span class="p">:</span> <span class="n">qb</span><span class="o">.</span><span class="n">AddEquity</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">symbols</span><span class="p">}</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="c1"># This is QuantConnect API code to get price history</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">qb</span><span class="o">.</span><span class="n">History</span><span class="p">(</span><span class="n">qb</span><span class="o">.</span><span class="n">Securities</span><span class="o">.</span><span class="n">Keys</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2009</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">),</span> <span class="n">Resolution</span><span class="o">.</span><span class="n">Daily</span><span class="p">)</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="s1">&#39;close&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+</code></pre></div>
+
+<p>I'm using arithmetic returns here so I can easily weight the returns across assets when computing portfolio returns.</p>
+<div class="highlight"><pre><span></span><code><span class="n">returns</span> <span class="o">=</span> <span class="p">(</span><span class="n">history</span> <span class="o">/</span> <span class="n">history</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">returns</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Let&#39;s define some helper functions to get cumulative return series and the total return</span>
+<span class="k">def</span> <span class="nf">get_cum_returns</span><span class="p">(</span><span class="n">returns</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">returns</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">cumprod</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span>
+
+<span class="k">def</span> <span class="nf">get_total_return</span><span class="p">(</span><span class="n">returns</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">returns</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+</code></pre></div>
+
+<h1>The Optimization</h1>
+<hr>
+<p>This function calculates the diversification ratio for a portfolio given asset weights and their covariance matrix. This is from equation (1) (Choueifaty &amp; Coignard, 2008).</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">diverse_ratio</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">covariance</span><span class="p">):</span>
+    <span class="c1"># Standard deviation vector</span>
+    <span class="n">stds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">covariance</span><span class="p">))</span>
+    <span class="c1"># Asset-weighted standard deviation</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">stds</span><span class="p">)</span>
+    <span class="c1"># Portfolio standard deviation</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">weights</span> <span class="o">@</span> <span class="n">covariance</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">num</span> <span class="o">/</span> <span class="n">denom</span>
+</code></pre></div>
+
+<p>Now, to confirm that scipy minimize works as we expect for this problem, I'm going to test a bunch of randomized starting weights to confirm that the final weights end up the same. I increase the level of precision using the 'ftol' option because returns are fairly small decimal quantities and I want to ensure the optimization converges completely.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<span class="c1"># Long-only constraint</span>
+<span class="n">bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cov</span><span class="p">))]</span>
+<span class="c1"># Portfolio weights must sum to 1</span>
+<span class="n">constraints</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;eq&#39;</span><span class="p">,</span> <span class="s1">&#39;fun&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="c1"># Set initial weights randomly</span>
+    <span class="n">initial</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cov</span><span class="p">))</span>
+    <span class="c1"># Use negative of objective function to maximize</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">diverse_ratio</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">initial</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;SLSQP&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">cov</span><span class="p">),</span>
+                      <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ftol&#39;</span><span class="p">:</span> <span class="mf">1e-10</span><span class="p">})</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Stack all optimized weight vectors, and round to 4 digits after the decimal</span>
+<span class="n">results_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">results</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+<span class="c1"># Let&#39;s look at the standard deviation of the asset weights accross the different optimizations</span>
+<span class="n">stds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">results_array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="c1"># Looks like they&#39;re all zero or nearly zero!</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stds</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">[0.00000000e+00 3.12250226e-17 0.00000000e+00 1.24900090e-16</span>
+<span class="err"> 0.00000000e+00 0.00000000e+00 0.00000000e+00 4.16333634e-17</span>
+<span class="err"> 0.00000000e+00 0.00000000e+00 0.00000000e+00 2.08166817e-17</span>
+<span class="err"> 1.66533454e-16 1.38777878e-16 1.66533454e-16 0.00000000e+00</span>
+<span class="err"> 0.00000000e+00 1.24900090e-16 2.42861287e-17]</span>
+</code></pre></div>
+
+<p>Looks like the optimization converges to the same values every time regardless of starting point! This means it's finding the true minimum (or maximum in this case). Let's look the at the weights for each symbol.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># I&#39;ll just grab the last optimization result this way</span>
+<span class="n">weights_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">returns</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">weights_series</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">symbol</span>
+<span class="err">EMB TYLA2YBBA25H     0.0000</span>
+<span class="err">HYG TRP5FE4RZXPH     0.0215</span>
+<span class="err">IFGL TXOSBV8QR5UT    0.0000</span>
+<span class="err">IGOV U9K4CFZZYLID    0.0586</span>
+<span class="err">IYR RVLEALAHHC2T     0.0000</span>
+<span class="err">SUB U7GAX8U02I5H     0.2759</span>
+<span class="err">TIP SU8XP1RCF8F9     0.0000</span>
+<span class="err">VB SVS2QA8SPHET      0.0336</span>
+<span class="err">VCIT UHVG8V7B7YAT    0.0000</span>
+<span class="err">VCLT UHVG8V7B7YAT    0.0000</span>
+<span class="err">VCSH UHVG8V7B7YAT    0.0000</span>
+<span class="err">VEA TULITAWO3WPX     0.0265</span>
+<span class="err">VGIT UHVG8V7B7YAT    0.1150</span>
+<span class="err">VGLT UHVG8V7B7YAT    0.1868</span>
+<span class="err">VGSH UHVG8V7B7YAT    0.1825</span>
+<span class="err">VMBS UHVG8V7B7YAT    0.0000</span>
+<span class="err">VO SVS2QA8SPHET      0.0000</span>
+<span class="err">VV SVS2QA8SPHET      0.0817</span>
+<span class="err">VWO T6UUS5E5P1ET     0.0179</span>
+<span class="c">dtype: float64</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Let&#39;s drop everything with a zero weight</span>
+<span class="n">final_weights</span> <span class="o">=</span> <span class="n">weights_series</span><span class="p">[</span><span class="n">weights_series</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="c1"># Sort by weight for viewing ease</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">final_weights</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">symbol</span>
+<span class="err">SUB U7GAX8U02I5H     0.2759</span>
+<span class="err">VGLT UHVG8V7B7YAT    0.1868</span>
+<span class="err">VGSH UHVG8V7B7YAT    0.1825</span>
+<span class="err">VGIT UHVG8V7B7YAT    0.1150</span>
+<span class="err">VV SVS2QA8SPHET      0.0817</span>
+<span class="err">IGOV U9K4CFZZYLID    0.0586</span>
+<span class="err">VB SVS2QA8SPHET      0.0336</span>
+<span class="err">VEA TULITAWO3WPX     0.0265</span>
+<span class="err">HYG TRP5FE4RZXPH     0.0215</span>
+<span class="err">VWO T6UUS5E5P1ET     0.0179</span>
+<span class="c">dtype: float64</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Confirm everything sums to 1. Looks good!</span>
+<span class="n">final_weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">0.9999999999999999</span>
+</code></pre></div>
+
+<h1>Backtest Results</h1>
+<hr>
+<p>After doing some offscreen magic to implement this in QuantConnect, we can see this dataframe tracking portfolio weights over each month. The algorithm starts at the beginning of 2011 and runs to the end of 2020. On the first trading day of each month it computes the portfolio using the code above using the past year of returns data for each ticker. Note that this is slightly different than the above that uses the entire return history in the optimization.</p>
+<div class="highlight"><pre><span></span><code><span class="n">json_frame</span> <span class="o">=</span> <span class="s1">&#39;{&quot;2011-01-01&quot;:{&quot;EMB&quot;:0.281,&quot;HYG&quot;:0.0333,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0016,&quot;SUB&quot;:0.2023,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0233,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0488,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0156,&quot;VGIT&quot;:0.005,&quot;VGLT&quot;:0.2165,&quot;VGSH&quot;:0.1016,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.071,&quot;VWO&quot;:0.0},&quot;2011-02-01&quot;:{&quot;EMB&quot;:0.2504,&quot;HYG&quot;:0.0485,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0059,&quot;IYR&quot;:0.0035,&quot;SUB&quot;:0.2268,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0222,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0531,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0071,&quot;VGIT&quot;:0.0197,&quot;VGLT&quot;:0.1943,&quot;VGSH&quot;:0.0962,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0725,&quot;VWO&quot;:0.0},&quot;2011-03-01&quot;:{&quot;EMB&quot;:0.2451,&quot;HYG&quot;:0.0561,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0085,&quot;IYR&quot;:0.0057,&quot;SUB&quot;:0.2306,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0163,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.066,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0011,&quot;VGIT&quot;:0.0194,&quot;VGLT&quot;:0.1771,&quot;VGSH&quot;:0.0949,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0793,&quot;VWO&quot;:0.0},&quot;2011-04-01&quot;:{&quot;EMB&quot;:0.2346,&quot;HYG&quot;:0.0449,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0111,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2223,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0069,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0703,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0349,&quot;VGLT&quot;:0.176,&quot;VGSH&quot;:0.0909,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.1081,&quot;VWO&quot;:0.0},&quot;2011-05-02&quot;:{&quot;EMB&quot;:0.2362,&quot;HYG&quot;:0.0601,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0148,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.236,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0137,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0656,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0062,&quot;VGIT&quot;:0.0247,&quot;VGLT&quot;:0.171,&quot;VGSH&quot;:0.0924,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0793,&quot;VWO&quot;:0.0},&quot;2011-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0362,&quot;IFGL&quot;:0.0116,&quot;IGOV&quot;:0.0053,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1453,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0217,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0389,&quot;VCSH&quot;:0.0696,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0017,&quot;VGLT&quot;:0.0384,&quot;VGSH&quot;:0.5013,&quot;VMBS&quot;:0.089,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0409,&quot;VWO&quot;:0.0},&quot;2011-07-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.048,&quot;IFGL&quot;:0.0091,&quot;IGOV&quot;:0.0032,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1615,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.018,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0257,&quot;VCSH&quot;:0.0541,&quot;VEA&quot;:0.0062,&quot;VGIT&quot;:0.0186,&quot;VGLT&quot;:0.0547,&quot;VGSH&quot;:0.4546,&quot;VMBS&quot;:0.098,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0482,&quot;VWO&quot;:0.0},&quot;2011-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0459,&quot;IFGL&quot;:0.0033,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1625,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0007,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0164,&quot;VCSH&quot;:0.055,&quot;VEA&quot;:0.0158,&quot;VGIT&quot;:0.04,&quot;VGLT&quot;:0.0434,&quot;VGSH&quot;:0.447,&quot;VMBS&quot;:0.106,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0639,&quot;VWO&quot;:0.0},&quot;2011-09-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.005,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0103,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1389,&quot;TIP&quot;:0.029,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0351,&quot;VEA&quot;:0.019,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0541,&quot;VGSH&quot;:0.5321,&quot;VMBS&quot;:0.1198,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0569,&quot;VWO&quot;:0.0},&quot;2011-10-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.003,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0107,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1391,&quot;TIP&quot;:0.0248,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0279,&quot;VEA&quot;:0.0218,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0707,&quot;VGSH&quot;:0.533,&quot;VMBS&quot;:0.1116,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0574,&quot;VWO&quot;:0.0},&quot;2011-11-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0046,&quot;IFGL&quot;:0.0005,&quot;IGOV&quot;:0.0124,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1318,&quot;TIP&quot;:0.0244,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0455,&quot;VEA&quot;:0.0295,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0806,&quot;VGSH&quot;:0.5216,&quot;VMBS&quot;:0.0998,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0492,&quot;VWO&quot;:0.0},&quot;2011-12-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0089,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0174,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1964,&quot;TIP&quot;:0.0296,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0071,&quot;VCSH&quot;:0.0241,&quot;VEA&quot;:0.0212,&quot;VGIT&quot;:0.0323,&quot;VGLT&quot;:0.071,&quot;VGSH&quot;:0.4508,&quot;VMBS&quot;:0.0916,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0495,&quot;VWO&quot;:0.0},&quot;2012-01-04&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0004,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0169,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1966,&quot;TIP&quot;:0.0445,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0344,&quot;VEA&quot;:0.0177,&quot;VGIT&quot;:0.0502,&quot;VGLT&quot;:0.0589,&quot;VGSH&quot;:0.4348,&quot;VMBS&quot;:0.0965,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0491,&quot;VWO&quot;:0.0},&quot;2012-02-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0131,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1578,&quot;TIP&quot;:0.039,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0474,&quot;VEA&quot;:0.0221,&quot;VGIT&quot;:0.0508,&quot;VGLT&quot;:0.0655,&quot;VGSH&quot;:0.4455,&quot;VMBS&quot;:0.1086,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0501,&quot;VWO&quot;:0.0},&quot;2012-03-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0184,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1191,&quot;TIP&quot;:0.0276,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0708,&quot;VEA&quot;:0.0213,&quot;VGIT&quot;:0.0593,&quot;VGLT&quot;:0.0637,&quot;VGSH&quot;:0.4482,&quot;VMBS&quot;:0.1222,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0477,&quot;VWO&quot;:0.0016},&quot;2012-04-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.005,&quot;IGOV&quot;:0.0153,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1342,&quot;TIP&quot;:0.0248,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.064,&quot;VEA&quot;:0.0199,&quot;VGIT&quot;:0.0507,&quot;VGLT&quot;:0.0598,&quot;VGSH&quot;:0.4565,&quot;VMBS&quot;:0.1257,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0439,&quot;VWO&quot;:0.0},&quot;2012-05-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0051,&quot;IGOV&quot;:0.0196,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1312,&quot;TIP&quot;:0.0226,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0713,&quot;VEA&quot;:0.0134,&quot;VGIT&quot;:0.0589,&quot;VGLT&quot;:0.0568,&quot;VGSH&quot;:0.4383,&quot;VMBS&quot;:0.1326,&quot;VO&quot;:0.0,&quot;VV&quot;:0.05,&quot;VWO&quot;:0.0},&quot;2012-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.007,&quot;IGOV&quot;:0.0148,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1332,&quot;TIP&quot;:0.02,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0729,&quot;VEA&quot;:0.0177,&quot;VGIT&quot;:0.0607,&quot;VGLT&quot;:0.0583,&quot;VGSH&quot;:0.4324,&quot;VMBS&quot;:0.1386,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0444,&quot;VWO&quot;:0.0},&quot;2012-07-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.005,&quot;IGOV&quot;:0.0127,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1328,&quot;TIP&quot;:0.0117,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0759,&quot;VEA&quot;:0.0168,&quot;VGIT&quot;:0.0691,&quot;VGLT&quot;:0.0581,&quot;VGSH&quot;:0.4187,&quot;VMBS&quot;:0.1535,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0457,&quot;VWO&quot;:0.0},&quot;2012-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0093,&quot;IGOV&quot;:0.0145,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1333,&quot;TIP&quot;:0.015,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0808,&quot;VEA&quot;:0.0097,&quot;VGIT&quot;:0.0758,&quot;VGLT&quot;:0.0602,&quot;VGSH&quot;:0.4195,&quot;VMBS&quot;:0.1326,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0495,&quot;VWO&quot;:0.0},&quot;2012-09-01&quot;:{&quot;EMB&quot;:0.0028,&quot;HYG&quot;:0.0246,&quot;IFGL&quot;:0.0212,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1838,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0051,&quot;VCSH&quot;:0.0614,&quot;VEA&quot;:0.012,&quot;VGIT&quot;:0.1194,&quot;VGLT&quot;:0.0786,&quot;VGSH&quot;:0.3254,&quot;VMBS&quot;:0.1152,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0504,&quot;VWO&quot;:0.0},&quot;2012-10-01&quot;:{&quot;EMB&quot;:0.0174,&quot;HYG&quot;:0.0174,&quot;IFGL&quot;:0.0265,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0001,&quot;SUB&quot;:0.1893,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0066,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.008,&quot;VCSH&quot;:0.0531,&quot;VEA&quot;:0.0044,&quot;VGIT&quot;:0.1138,&quot;VGLT&quot;:0.0719,&quot;VGSH&quot;:0.3082,&quot;VMBS&quot;:0.1407,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0427,&quot;VWO&quot;:0.0},&quot;2012-11-01&quot;:{&quot;EMB&quot;:0.0304,&quot;HYG&quot;:0.0123,&quot;IFGL&quot;:0.0304,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0069,&quot;SUB&quot;:0.2141,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0035,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0055,&quot;VCSH&quot;:0.0005,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0903,&quot;VGLT&quot;:0.0619,&quot;VGSH&quot;:0.359,&quot;VMBS&quot;:0.1525,&quot;VO&quot;:0.0153,&quot;VV&quot;:0.0173,&quot;VWO&quot;:0.0},&quot;2012-12-01&quot;:{&quot;EMB&quot;:0.0443,&quot;HYG&quot;:0.0071,&quot;IFGL&quot;:0.0327,&quot;IGOV&quot;:0.0049,&quot;IYR&quot;:0.0132,&quot;SUB&quot;:0.2352,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0063,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0032,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0379,&quot;VGLT&quot;:0.0632,&quot;VGSH&quot;:0.4076,&quot;VMBS&quot;:0.1238,&quot;VO&quot;:0.0041,&quot;VV&quot;:0.0166,&quot;VWO&quot;:0.0},&quot;2013-01-01&quot;:{&quot;EMB&quot;:0.0394,&quot;HYG&quot;:0.0016,&quot;IFGL&quot;:0.0388,&quot;IGOV&quot;:0.0125,&quot;IYR&quot;:0.023,&quot;SUB&quot;:0.2392,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0025,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0094,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0383,&quot;VGLT&quot;:0.078,&quot;VGSH&quot;:0.3378,&quot;VMBS&quot;:0.1473,&quot;VO&quot;:0.0018,&quot;VV&quot;:0.0303,&quot;VWO&quot;:0.0},&quot;2013-02-01&quot;:{&quot;EMB&quot;:0.0216,&quot;HYG&quot;:0.0109,&quot;IFGL&quot;:0.026,&quot;IGOV&quot;:0.0179,&quot;IYR&quot;:0.0244,&quot;SUB&quot;:0.2354,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0465,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0049,&quot;VGLT&quot;:0.0713,&quot;VGSH&quot;:0.3892,&quot;VMBS&quot;:0.126,&quot;VO&quot;:0.0119,&quot;VV&quot;:0.0141,&quot;VWO&quot;:0.0},&quot;2013-03-01&quot;:{&quot;EMB&quot;:0.0099,&quot;HYG&quot;:0.0196,&quot;IFGL&quot;:0.023,&quot;IGOV&quot;:0.012,&quot;IYR&quot;:0.0233,&quot;SUB&quot;:0.2382,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.071,&quot;VEA&quot;:0.0011,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0745,&quot;VGSH&quot;:0.3835,&quot;VMBS&quot;:0.116,&quot;VO&quot;:0.0034,&quot;VV&quot;:0.0244,&quot;VWO&quot;:0.0},&quot;2013-04-01&quot;:{&quot;EMB&quot;:0.009,&quot;HYG&quot;:0.0181,&quot;IFGL&quot;:0.0112,&quot;IGOV&quot;:0.0142,&quot;IYR&quot;:0.0145,&quot;SUB&quot;:0.2224,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0852,&quot;VEA&quot;:0.0045,&quot;VGIT&quot;:0.0078,&quot;VGLT&quot;:0.0681,&quot;VGSH&quot;:0.4034,&quot;VMBS&quot;:0.1098,&quot;VO&quot;:0.0221,&quot;VV&quot;:0.0027,&quot;VWO&quot;:0.007},&quot;2013-05-01&quot;:{&quot;EMB&quot;:0.0041,&quot;HYG&quot;:0.0273,&quot;IFGL&quot;:0.0006,&quot;IGOV&quot;:0.0147,&quot;IYR&quot;:0.0053,&quot;SUB&quot;:0.214,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0595,&quot;VEA&quot;:0.0051,&quot;VGIT&quot;:0.0194,&quot;VGLT&quot;:0.0762,&quot;VGSH&quot;:0.3958,&quot;VMBS&quot;:0.127,&quot;VO&quot;:0.0242,&quot;VV&quot;:0.0118,&quot;VWO&quot;:0.015},&quot;2013-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0004,&quot;IFGL&quot;:0.004,&quot;IGOV&quot;:0.0159,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2299,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0208,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0303,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0858,&quot;VGSH&quot;:0.4469,&quot;VMBS&quot;:0.1075,&quot;VO&quot;:0.0124,&quot;VV&quot;:0.0316,&quot;VWO&quot;:0.0144},&quot;2013-07-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0237,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1649,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0339,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0095,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1079,&quot;VGSH&quot;:0.6026,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0467,&quot;VWO&quot;:0.0108},&quot;2013-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.005,&quot;IGOV&quot;:0.0218,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.1636,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0476,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0118,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1061,&quot;VGSH&quot;:0.5979,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0462,&quot;VWO&quot;:0.0},&quot;2013-09-03&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0108,&quot;IGOV&quot;:0.0406,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2016,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0398,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0059,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.097,&quot;VGSH&quot;:0.5518,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0525,&quot;VWO&quot;:0.0},&quot;2013-10-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.011,&quot;IGOV&quot;:0.0425,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2498,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0422,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0002,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1029,&quot;VGSH&quot;:0.4849,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0649,&quot;VWO&quot;:0.0018},&quot;2013-11-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0107,&quot;IGOV&quot;:0.0373,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2653,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.043,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1017,&quot;VGSH&quot;:0.4815,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0537,&quot;VWO&quot;:0.0068},&quot;2013-12-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0158,&quot;IGOV&quot;:0.0465,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2996,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0557,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1061,&quot;VGSH&quot;:0.4188,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0547,&quot;VWO&quot;:0.0027},&quot;2014-01-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0167,&quot;IGOV&quot;:0.046,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2978,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0628,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0917,&quot;VGSH&quot;:0.4502,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0299,&quot;VWO&quot;:0.005},&quot;2014-02-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0143,&quot;IGOV&quot;:0.0478,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2943,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0466,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0951,&quot;VGSH&quot;:0.4426,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0549,&quot;VWO&quot;:0.0044},&quot;2014-03-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0158,&quot;IGOV&quot;:0.0496,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.279,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0445,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0846,&quot;VGSH&quot;:0.4747,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0463,&quot;VWO&quot;:0.0056},&quot;2014-04-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.015,&quot;IGOV&quot;:0.0464,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.28,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0381,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0879,&quot;VGSH&quot;:0.4694,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0608,&quot;VWO&quot;:0.0026},&quot;2014-05-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0229,&quot;IGOV&quot;:0.0455,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2618,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0391,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0793,&quot;VGSH&quot;:0.5026,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0489,&quot;VWO&quot;:0.0},&quot;2014-06-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0141,&quot;IGOV&quot;:0.0502,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2579,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0319,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0745,&quot;VGSH&quot;:0.5128,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0562,&quot;VWO&quot;:0.0024},&quot;2014-07-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0202,&quot;IGOV&quot;:0.0496,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3549,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0389,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0722,&quot;VGSH&quot;:0.4204,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0438,&quot;VWO&quot;:0.0},&quot;2014-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0157,&quot;IGOV&quot;:0.0501,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4528,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0199,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.059,&quot;VGSH&quot;:0.3523,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0492,&quot;VWO&quot;:0.0009},&quot;2014-09-02&quot;:{&quot;EMB&quot;:0.0064,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0144,&quot;IGOV&quot;:0.0296,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4412,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0222,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0665,&quot;VGSH&quot;:0.3701,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0473,&quot;VWO&quot;:0.0024},&quot;2014-10-01&quot;:{&quot;EMB&quot;:0.0171,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.018,&quot;IGOV&quot;:0.0387,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.388,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0191,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.065,&quot;VGSH&quot;:0.4012,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.051,&quot;VWO&quot;:0.0018},&quot;2014-11-01&quot;:{&quot;EMB&quot;:0.0125,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0144,&quot;IGOV&quot;:0.0515,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3845,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0183,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0828,&quot;VGSH&quot;:0.3638,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0706,&quot;VWO&quot;:0.0016},&quot;2014-12-01&quot;:{&quot;EMB&quot;:0.014,&quot;HYG&quot;:0.0181,&quot;IFGL&quot;:0.0107,&quot;IGOV&quot;:0.0409,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3384,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0131,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0825,&quot;VGSH&quot;:0.4105,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0664,&quot;VWO&quot;:0.0052},&quot;2015-01-01&quot;:{&quot;EMB&quot;:0.0151,&quot;HYG&quot;:0.0397,&quot;IFGL&quot;:0.0173,&quot;IGOV&quot;:0.0451,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3799,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0063,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0791,&quot;VGSH&quot;:0.3501,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0657,&quot;VWO&quot;:0.0017},&quot;2015-02-02&quot;:{&quot;EMB&quot;:0.009,&quot;HYG&quot;:0.0376,&quot;IFGL&quot;:0.0151,&quot;IGOV&quot;:0.048,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3653,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0134,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0953,&quot;VGSH&quot;:0.3275,&quot;VMBS&quot;:0.0098,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0723,&quot;VWO&quot;:0.0067},&quot;2015-03-02&quot;:{&quot;EMB&quot;:0.0113,&quot;HYG&quot;:0.0461,&quot;IFGL&quot;:0.0127,&quot;IGOV&quot;:0.0539,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4254,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0211,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1043,&quot;VGSH&quot;:0.1931,&quot;VMBS&quot;:0.0436,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0843,&quot;VWO&quot;:0.0042},&quot;2015-04-01&quot;:{&quot;EMB&quot;:0.011,&quot;HYG&quot;:0.0475,&quot;IFGL&quot;:0.0122,&quot;IGOV&quot;:0.0366,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.494,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0361,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0797,&quot;VGSH&quot;:0.1219,&quot;VMBS&quot;:0.103,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0533,&quot;VWO&quot;:0.0047},&quot;2015-05-01&quot;:{&quot;EMB&quot;:0.0049,&quot;HYG&quot;:0.0499,&quot;IFGL&quot;:0.0154,&quot;IGOV&quot;:0.0475,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.5434,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0346,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0855,&quot;VGSH&quot;:0.0247,&quot;VMBS&quot;:0.1233,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0669,&quot;VWO&quot;:0.0039},&quot;2015-06-01&quot;:{&quot;EMB&quot;:0.016,&quot;HYG&quot;:0.0321,&quot;IFGL&quot;:0.0083,&quot;IGOV&quot;:0.0498,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.6102,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0485,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0851,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.0859,&quot;VO&quot;:0.0,&quot;VV&quot;:0.057,&quot;VWO&quot;:0.0071},&quot;2015-07-01&quot;:{&quot;EMB&quot;:0.0094,&quot;HYG&quot;:0.0266,&quot;IFGL&quot;:0.0097,&quot;IGOV&quot;:0.0646,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.5987,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0576,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0947,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.0662,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0593,&quot;VWO&quot;:0.0132},&quot;2015-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0355,&quot;IFGL&quot;:0.0067,&quot;IGOV&quot;:0.0677,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.6279,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0526,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.0293,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0561,&quot;VWO&quot;:0.0242},&quot;2015-09-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0504,&quot;IFGL&quot;:0.0005,&quot;IGOV&quot;:0.0972,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.6113,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0456,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0909,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.0293,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0503,&quot;VWO&quot;:0.0244},&quot;2015-10-01&quot;:{&quot;EMB&quot;:0.003,&quot;HYG&quot;:0.0439,&quot;IFGL&quot;:0.007,&quot;IGOV&quot;:0.0918,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.6093,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0401,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1004,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.0262,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0576,&quot;VWO&quot;:0.0206},&quot;2015-11-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0597,&quot;IFGL&quot;:0.0071,&quot;IGOV&quot;:0.0855,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.5818,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0473,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0836,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.0744,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0472,&quot;VWO&quot;:0.0134},&quot;2015-12-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0572,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0909,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.5734,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0624,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0868,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.0756,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0366,&quot;VWO&quot;:0.0171},&quot;2016-01-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0435,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0978,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.5624,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0579,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0796,&quot;VGSH&quot;:0.0,&quot;VMBS&quot;:0.101,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0349,&quot;VWO&quot;:0.0228},&quot;2016-02-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0462,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.1091,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.5679,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.039,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0791,&quot;VGSH&quot;:0.0402,&quot;VMBS&quot;:0.0543,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0427,&quot;VWO&quot;:0.0215},&quot;2016-03-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0467,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.1003,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.5289,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0433,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0044,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0793,&quot;VGSH&quot;:0.1086,&quot;VMBS&quot;:0.0402,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0295,&quot;VWO&quot;:0.0188},&quot;2016-04-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0506,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.095,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4618,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0095,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0148,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0915,&quot;VGSH&quot;:0.206,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.054,&quot;VWO&quot;:0.0168},&quot;2016-05-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0431,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0919,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4633,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0147,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0284,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0902,&quot;VGSH&quot;:0.2165,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0422,&quot;VWO&quot;:0.0096},&quot;2016-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0516,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0859,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4237,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0465,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.1002,&quot;VGSH&quot;:0.2443,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0452,&quot;VWO&quot;:0.0026},&quot;2016-07-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.052,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0541,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4357,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0381,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0956,&quot;VGSH&quot;:0.2598,&quot;VMBS&quot;:0.027,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0377,&quot;VWO&quot;:0.0},&quot;2016-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0446,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0446,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3868,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0345,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0853,&quot;VGSH&quot;:0.2891,&quot;VMBS&quot;:0.0746,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0405,&quot;VWO&quot;:0.0},&quot;2016-09-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0347,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0321,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4563,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0009,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.029,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.087,&quot;VGSH&quot;:0.216,&quot;VMBS&quot;:0.0887,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0554,&quot;VWO&quot;:0.0},&quot;2016-10-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0175,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0242,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4451,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0071,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0221,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0398,&quot;VGSH&quot;:0.2747,&quot;VMBS&quot;:0.1383,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0313,&quot;VWO&quot;:0.0},&quot;2016-11-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0201,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0171,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4289,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0282,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0391,&quot;VGSH&quot;:0.2909,&quot;VMBS&quot;:0.1473,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0284,&quot;VWO&quot;:0.0},&quot;2016-12-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0045,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0154,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3899,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0268,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0237,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0392,&quot;VGSH&quot;:0.3642,&quot;VMBS&quot;:0.119,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0173,&quot;VWO&quot;:0.0},&quot;2017-01-04&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4121,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0354,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0261,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0474,&quot;VGSH&quot;:0.3539,&quot;VMBS&quot;:0.1147,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0104,&quot;VWO&quot;:0.0},&quot;2017-02-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4291,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.042,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0126,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0404,&quot;VGSH&quot;:0.3395,&quot;VMBS&quot;:0.1133,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0231,&quot;VWO&quot;:0.0},&quot;2017-03-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4144,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0464,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0172,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0355,&quot;VGSH&quot;:0.3559,&quot;VMBS&quot;:0.1177,&quot;VO&quot;:0.0,&quot;VV&quot;:0.013,&quot;VWO&quot;:0.0},&quot;2017-04-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4216,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0502,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0166,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0296,&quot;VGSH&quot;:0.3708,&quot;VMBS&quot;:0.1039,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0073,&quot;VWO&quot;:0.0},&quot;2017-05-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4217,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0507,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0143,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0259,&quot;VGSH&quot;:0.3768,&quot;VMBS&quot;:0.1007,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0097,&quot;VWO&quot;:0.0},&quot;2017-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3982,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0457,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0102,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0234,&quot;VGSH&quot;:0.3951,&quot;VMBS&quot;:0.1045,&quot;VO&quot;:0.0,&quot;VV&quot;:0.023,&quot;VWO&quot;:0.0},&quot;2017-07-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.004,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3849,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.05,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0117,&quot;VGSH&quot;:0.3966,&quot;VMBS&quot;:0.1225,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0302,&quot;VWO&quot;:0.0},&quot;2017-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0124,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.392,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0545,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0138,&quot;VGSH&quot;:0.4034,&quot;VMBS&quot;:0.0967,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0271,&quot;VWO&quot;:0.0},&quot;2017-09-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0117,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3813,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0526,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0187,&quot;VGSH&quot;:0.4274,&quot;VMBS&quot;:0.0796,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0287,&quot;VWO&quot;:0.0},&quot;2017-10-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0232,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3175,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0602,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0366,&quot;VGSH&quot;:0.4669,&quot;VMBS&quot;:0.0431,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0525,&quot;VWO&quot;:0.0},&quot;2017-11-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0303,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3135,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0723,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0479,&quot;VGSH&quot;:0.4583,&quot;VMBS&quot;:0.0249,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0528,&quot;VWO&quot;:0.0},&quot;2017-12-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0308,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3317,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0467,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0397,&quot;VGSH&quot;:0.4552,&quot;VMBS&quot;:0.0187,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0771,&quot;VWO&quot;:0.0},&quot;2018-01-03&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0425,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3632,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.044,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0319,&quot;VGSH&quot;:0.4434,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0746,&quot;VWO&quot;:0.0003},&quot;2018-02-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0459,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3611,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0395,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0294,&quot;VGSH&quot;:0.4519,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0673,&quot;VWO&quot;:0.0048},&quot;2018-03-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0252,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3489,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0358,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0125,&quot;VGLT&quot;:0.0193,&quot;VGSH&quot;:0.5223,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0335,&quot;VWO&quot;:0.0025},&quot;2018-04-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0159,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0297,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.323,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0406,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0416,&quot;VGLT&quot;:0.0193,&quot;VGSH&quot;:0.5052,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0247,&quot;VWO&quot;:0.0},&quot;2018-05-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.013,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0288,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2641,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0428,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0527,&quot;VGLT&quot;:0.0185,&quot;VGSH&quot;:0.5592,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0209,&quot;VWO&quot;:0.0},&quot;2018-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0218,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.039,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2714,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0365,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0371,&quot;VGLT&quot;:0.0114,&quot;VGSH&quot;:0.5587,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0237,&quot;VWO&quot;:0.0005},&quot;2018-07-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0131,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0344,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2614,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0376,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0063,&quot;VGIT&quot;:0.0687,&quot;VGLT&quot;:0.0088,&quot;VGSH&quot;:0.5473,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0167,&quot;VWO&quot;:0.0057},&quot;2018-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0116,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0271,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2699,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0291,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0118,&quot;VGIT&quot;:0.0898,&quot;VGLT&quot;:0.005,&quot;VGSH&quot;:0.5311,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0162,&quot;VWO&quot;:0.0084},&quot;2018-09-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0062,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0246,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2769,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.028,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0172,&quot;VGIT&quot;:0.1087,&quot;VGLT&quot;:0.0,&quot;VGSH&quot;:0.5167,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0127,&quot;VWO&quot;:0.0091},&quot;2018-10-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.031,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2914,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0214,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0179,&quot;VGIT&quot;:0.1111,&quot;VGLT&quot;:0.0,&quot;VGSH&quot;:0.5008,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0001,&quot;VV&quot;:0.0186,&quot;VWO&quot;:0.0077},&quot;2018-11-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0297,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2697,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0126,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0223,&quot;VGIT&quot;:0.1193,&quot;VGLT&quot;:0.0,&quot;VGSH&quot;:0.5189,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0023,&quot;VV&quot;:0.0209,&quot;VWO&quot;:0.0042},&quot;2018-12-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0223,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2512,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0104,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0335,&quot;VGIT&quot;:0.1498,&quot;VGLT&quot;:0.0,&quot;VGSH&quot;:0.5114,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0214,&quot;VWO&quot;:0.0},&quot;2019-01-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0074,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0262,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2902,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0108,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0297,&quot;VGIT&quot;:0.1366,&quot;VGLT&quot;:0.0005,&quot;VGSH&quot;:0.4819,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0153,&quot;VWO&quot;:0.0015},&quot;2019-02-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0098,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.027,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.2882,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0148,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0295,&quot;VGIT&quot;:0.1346,&quot;VGLT&quot;:0.0084,&quot;VGSH&quot;:0.4721,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0156,&quot;VWO&quot;:0.0},&quot;2019-03-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0138,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0348,&quot;IYR&quot;:0.0032,&quot;SUB&quot;:0.2908,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0156,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0298,&quot;VGIT&quot;:0.1313,&quot;VGLT&quot;:0.0179,&quot;VGSH&quot;:0.4425,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0202,&quot;VWO&quot;:0.0},&quot;2019-04-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0027,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0278,&quot;IYR&quot;:0.0022,&quot;SUB&quot;:0.2634,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0234,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.032,&quot;VGIT&quot;:0.1015,&quot;VGLT&quot;:0.0235,&quot;VGSH&quot;:0.5062,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0148,&quot;VWO&quot;:0.0024},&quot;2019-05-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0297,&quot;IYR&quot;:0.0032,&quot;SUB&quot;:0.3158,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0171,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.036,&quot;VGIT&quot;:0.0701,&quot;VGLT&quot;:0.0323,&quot;VGSH&quot;:0.4754,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0185,&quot;VWO&quot;:0.0018},&quot;2019-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0163,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0345,&quot;IYR&quot;:0.0014,&quot;SUB&quot;:0.3093,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0191,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0226,&quot;VGIT&quot;:0.0523,&quot;VGLT&quot;:0.0429,&quot;VGSH&quot;:0.4761,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0218,&quot;VWO&quot;:0.0038},&quot;2019-07-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0027,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0294,&quot;IYR&quot;:0.001,&quot;SUB&quot;:0.3699,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0156,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0225,&quot;VGIT&quot;:0.0193,&quot;VGLT&quot;:0.0564,&quot;VGSH&quot;:0.4499,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0307,&quot;VWO&quot;:0.0026},&quot;2019-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0258,&quot;IYR&quot;:0.0004,&quot;SUB&quot;:0.3865,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0196,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0222,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0646,&quot;VGSH&quot;:0.4479,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0301,&quot;VWO&quot;:0.0028},&quot;2019-09-03&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0237,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3902,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0249,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0183,&quot;VGIT&quot;:0.0039,&quot;VGLT&quot;:0.0766,&quot;VGSH&quot;:0.4221,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0375,&quot;VWO&quot;:0.0028},&quot;2019-10-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0219,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3811,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0352,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0223,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0726,&quot;VGSH&quot;:0.4373,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0258,&quot;VWO&quot;:0.0038},&quot;2019-11-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0092,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3939,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0468,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0358,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0807,&quot;VGSH&quot;:0.4176,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0105,&quot;VWO&quot;:0.0055},&quot;2019-12-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0281,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.4016,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.041,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.022,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0651,&quot;VGSH&quot;:0.4082,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0181,&quot;VWO&quot;:0.016},&quot;2020-01-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0221,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3279,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.043,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0189,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0582,&quot;VGSH&quot;:0.4836,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0337,&quot;VWO&quot;:0.0126},&quot;2020-02-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0242,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3849,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0417,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0165,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0583,&quot;VGSH&quot;:0.4228,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0306,&quot;VWO&quot;:0.0209},&quot;2020-03-02&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0023,&quot;IGOV&quot;:0.0308,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.3912,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.039,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0174,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0539,&quot;VGSH&quot;:0.422,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0187,&quot;VWO&quot;:0.0247},&quot;2020-04-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0524,&quot;VGSH&quot;:0.874,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0637,&quot;VWO&quot;:0.01},&quot;2020-05-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0565,&quot;VGSH&quot;:0.8721,&quot;VMBS&quot;:0.0,&quot;VO&quot;:0.0,&quot;VV&quot;:0.059,&quot;VWO&quot;:0.0123},&quot;2020-06-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0019,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0567,&quot;VGSH&quot;:0.8704,&quot;VMBS&quot;:0.0004,&quot;VO&quot;:0.0,&quot;VV&quot;:0.056,&quot;VWO&quot;:0.0146},&quot;2020-07-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0564,&quot;VGSH&quot;:0.8717,&quot;VMBS&quot;:0.0036,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0539,&quot;VWO&quot;:0.0144},&quot;2020-08-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0497,&quot;VGSH&quot;:0.8822,&quot;VMBS&quot;:0.0049,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0502,&quot;VWO&quot;:0.013},&quot;2020-09-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.044,&quot;VGSH&quot;:0.8877,&quot;VMBS&quot;:0.009,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0457,&quot;VWO&quot;:0.0136},&quot;2020-10-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0398,&quot;VGSH&quot;:0.893,&quot;VMBS&quot;:0.0131,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0396,&quot;VWO&quot;:0.0145},&quot;2020-11-03&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0362,&quot;VGSH&quot;:0.8969,&quot;VMBS&quot;:0.0167,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0367,&quot;VWO&quot;:0.0135},&quot;2020-12-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0,&quot;SUB&quot;:0.0008,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.003,&quot;VEA&quot;:0.0,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.035,&quot;VGSH&quot;:0.8931,&quot;VMBS&quot;:0.0201,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0378,&quot;VWO&quot;:0.0103},&quot;2021-01-01&quot;:{&quot;EMB&quot;:0.0,&quot;HYG&quot;:0.0,&quot;IFGL&quot;:0.0,&quot;IGOV&quot;:0.0,&quot;IYR&quot;:0.0008,&quot;SUB&quot;:0.0062,&quot;TIP&quot;:0.0,&quot;VB&quot;:0.0,&quot;VCIT&quot;:0.0,&quot;VCLT&quot;:0.0,&quot;VCSH&quot;:0.0,&quot;VEA&quot;:0.0008,&quot;VGIT&quot;:0.0,&quot;VGLT&quot;:0.0536,&quot;VGSH&quot;:0.8604,&quot;VMBS&quot;:0.0212,&quot;VO&quot;:0.0,&quot;VV&quot;:0.0428,&quot;VWO&quot;:0.0141}}&#39;</span>
+<span class="c1"># Because of the nuances of the way pandas imports data, I need to transpose to get the dates on the axis I want</span>
+<span class="n">weights_frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">json_frame</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">weights_frame</span>
+</code></pre></div>
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>EMB</th>
+      <th>HYG</th>
+      <th>IFGL</th>
+      <th>IGOV</th>
+      <th>IYR</th>
+      <th>SUB</th>
+      <th>TIP</th>
+      <th>VB</th>
+      <th>VCIT</th>
+      <th>VCLT</th>
+      <th>VCSH</th>
+      <th>VEA</th>
+      <th>VGIT</th>
+      <th>VGLT</th>
+      <th>VGSH</th>
+      <th>VMBS</th>
+      <th>VO</th>
+      <th>VV</th>
+      <th>VWO</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2011-01-01</th>
+      <td>0.2810</td>
+      <td>0.0333</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0016</td>
+      <td>0.2023</td>
+      <td>0.0</td>
+      <td>0.0233</td>
+      <td>0.0</td>
+      <td>0.0488</td>
+      <td>0.000</td>
+      <td>0.0156</td>
+      <td>0.0050</td>
+      <td>0.2165</td>
+      <td>0.1016</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0710</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <th>2011-02-01</th>
+      <td>0.2504</td>
+      <td>0.0485</td>
+      <td>0.0</td>
+      <td>0.0059</td>
+      <td>0.0035</td>
+      <td>0.2268</td>
+      <td>0.0</td>
+      <td>0.0222</td>
+      <td>0.0</td>
+      <td>0.0531</td>
+      <td>0.000</td>
+      <td>0.0071</td>
+      <td>0.0197</td>
+      <td>0.1943</td>
+      <td>0.0962</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0725</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <th>2011-03-01</th>
+      <td>0.2451</td>
+      <td>0.0561</td>
+      <td>0.0</td>
+      <td>0.0085</td>
+      <td>0.0057</td>
+      <td>0.2306</td>
+      <td>0.0</td>
+      <td>0.0163</td>
+      <td>0.0</td>
+      <td>0.0660</td>
+      <td>0.000</td>
+      <td>0.0011</td>
+      <td>0.0194</td>
+      <td>0.1771</td>
+      <td>0.0949</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0793</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <th>2011-04-01</th>
+      <td>0.2346</td>
+      <td>0.0449</td>
+      <td>0.0</td>
+      <td>0.0111</td>
+      <td>0.0000</td>
+      <td>0.2223</td>
+      <td>0.0</td>
+      <td>0.0069</td>
+      <td>0.0</td>
+      <td>0.0703</td>
+      <td>0.000</td>
+      <td>0.0000</td>
+      <td>0.0349</td>
+      <td>0.1760</td>
+      <td>0.0909</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.1081</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <th>2011-05-02</th>
+      <td>0.2362</td>
+      <td>0.0601</td>
+      <td>0.0</td>
+      <td>0.0148</td>
+      <td>0.0000</td>
+      <td>0.2360</td>
+      <td>0.0</td>
+      <td>0.0137</td>
+      <td>0.0</td>
+      <td>0.0656</td>
+      <td>0.000</td>
+      <td>0.0062</td>
+      <td>0.0247</td>
+      <td>0.1710</td>
+      <td>0.0924</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0793</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>2020-09-01</th>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0440</td>
+      <td>0.8877</td>
+      <td>0.0090</td>
+      <td>0.0</td>
+      <td>0.0457</td>
+      <td>0.0136</td>
+    </tr>
+    <tr>
+      <th>2020-10-01</th>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0398</td>
+      <td>0.8930</td>
+      <td>0.0131</td>
+      <td>0.0</td>
+      <td>0.0396</td>
+      <td>0.0145</td>
+    </tr>
+    <tr>
+      <th>2020-11-03</th>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0362</td>
+      <td>0.8969</td>
+      <td>0.0167</td>
+      <td>0.0</td>
+      <td>0.0367</td>
+      <td>0.0135</td>
+    </tr>
+    <tr>
+      <th>2020-12-01</th>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0008</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.003</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0350</td>
+      <td>0.8931</td>
+      <td>0.0201</td>
+      <td>0.0</td>
+      <td>0.0378</td>
+      <td>0.0103</td>
+    </tr>
+    <tr>
+      <th>2021-01-01</th>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0008</td>
+      <td>0.0062</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.0</td>
+      <td>0.0000</td>
+      <td>0.000</td>
+      <td>0.0008</td>
+      <td>0.0000</td>
+      <td>0.0536</td>
+      <td>0.8604</td>
+      <td>0.0212</td>
+      <td>0.0</td>
+      <td>0.0428</td>
+      <td>0.0141</td>
+    </tr>
+  </tbody>
+</table>
+<p>121 rows × 19 columns</p>
+</div>
+
+<p>Let's take a closer look at a particular ETFs portfolio allocation over time. I'm going to use VGSH for this because it's the least risky, most cash-like instrument under consideration.</p>
+<p>You can see that the weight changes quite drastically over time, from near zero to nearly 90% in the later parts of 2020. This reflects the nature of how we are calculating asset variances and correlations using only the last 252 days of data. When volatilities or correlations change it causes changes in the allocation.</p>
+<div class="highlight"><pre><span></span><code><span class="n">weights_frame</span><span class="p">[</span><span class="s1">&#39;VGSH&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f2619fe64e0&gt;</span>
+</code></pre></div>
+
+<p><img alt="png" src="photos/01_07_2021/output_24_1.png"></p>
+<p>In this case, it's caused by a large change in correlation for certain assets in early 2020. Shown in the graph below is the correlation between VGSH and the other ETFs over time. Note the large downward jump on the right side. This shows the weakness of using a rolling data approach like in the backtest. You get big market jumps that dramatically shift your allocation and then when they eventually fall out the backward-looking window, you get big jumps again. I want to come back to this topic some time in the future.</p>
+<div class="highlight"><pre><span></span><code><span class="n">rolling_corr</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="mi">252</span><span class="p">)</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+<span class="n">rolling_corr</span><span class="p">[</span><span class="s1">&#39;VGSH&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f26487cb748&gt;</span>
+</code></pre></div>
+
+<p><img alt="png" src="photos/01_07_2021/output_26_1.png"></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># let&#39;s reindex the monthly weights frame to daily with forward fill to match returns arra</span>
+<span class="n">weights_frame</span> <span class="o">=</span> <span class="n">weights_frame</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ffill&#39;</span><span class="p">)</span>
+<span class="c1"># Now we can calculate portfolio returns by weight the returns and summing</span>
+<span class="n">port_returns</span> <span class="o">=</span> <span class="p">(</span><span class="n">weights_frame</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="n">returns</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">skipna</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="c1"># We can also calculate cumulative returns this way because we&#39;re working with logarithmic returns</span>
+<span class="n">cum_port_returns</span> <span class="o">=</span> <span class="n">get_cum_returns</span><span class="p">(</span><span class="n">port_returns</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Alright, plotted below are the cumulative returns for the strategy! Note this is without transaction costs factored in.</p>
+<div class="highlight"><pre><span></span><code><span class="n">cum_port_returns</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f2679f12160&gt;</span>
+</code></pre></div>
+
+<p><img alt="png" src="photos/01_07_2021/output_29_1.png"></p>
+<p>Now let's assemble some backtest statistics. We're going to be using mlfinlab for this task.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">mlfinlab</span> <span class="kn">import</span> <span class="n">backtest_statistics</span>
+
+<span class="n">total_return</span> <span class="o">=</span> <span class="n">get_total_return</span><span class="p">(</span><span class="n">port_returns</span><span class="p">)</span>
+<span class="n">cagr</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_return</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">9</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">sharpe</span> <span class="o">=</span> <span class="n">backtest_statistics</span><span class="o">.</span><span class="n">sharpe_ratio</span><span class="p">(</span><span class="n">port_returns</span><span class="p">)</span>
+<span class="n">drawdown</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">backtest_statistics</span><span class="o">.</span><span class="n">drawdown_and_time_under_water</span><span class="p">(</span><span class="n">cum_port_returns</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">mar_ratio</span> <span class="o">=</span> <span class="n">cagr</span> <span class="o">/</span> <span class="n">drawdown</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="s1">&#39;Total Return&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">total_return</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span><span class="s1">&#39;CAGR&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">cagr</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span> 
+           <span class="s1">&#39;Sharpe Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">sharpe</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;Maximum Drawdown&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">drawdown</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;MAR Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">mar_ratio</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">Total Return        29.77%</span>
+<span class="err">CAGR                 2.94%</span>
+<span class="err">Sharpe Ratio          1.15</span>
+<span class="err">Maximum Drawdown     7.07%</span>
+<span class="err">MAR Ratio             0.42</span>
+<span class="c">dtype: object</span>
+</code></pre></div>
+
+<p>Let's compare that to just US large cap stocks over the same period.</p>
+<div class="highlight"><pre><span></span><code><span class="n">vv_returns</span> <span class="o">=</span> <span class="n">returns</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">][</span><span class="s1">&#39;2011&#39;</span><span class="p">:]</span>
+<span class="n">vv_cum_returns</span> <span class="o">=</span> <span class="n">get_cum_returns</span><span class="p">(</span><span class="n">vv_returns</span><span class="p">)</span>
+
+<span class="n">total_return</span> <span class="o">=</span> <span class="n">get_total_return</span><span class="p">(</span><span class="n">vv_returns</span><span class="p">)</span>
+<span class="n">cagr</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_return</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">9</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">sharpe</span> <span class="o">=</span> <span class="n">backtest_statistics</span><span class="o">.</span><span class="n">sharpe_ratio</span><span class="p">(</span><span class="n">vv_returns</span><span class="p">)</span>
+<span class="n">drawdown</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">backtest_statistics</span><span class="o">.</span><span class="n">drawdown_and_time_under_water</span><span class="p">(</span><span class="n">vv_cum_returns</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">mar_ratio</span> <span class="o">=</span> <span class="n">cagr</span> <span class="o">/</span> <span class="n">drawdown</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="s1">&#39;Total Return&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">total_return</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span><span class="s1">&#39;CAGR&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">cagr</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span> 
+           <span class="s1">&#39;Sharpe Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">sharpe</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;Maximum Drawdown&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">drawdown</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;MAR Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">mar_ratio</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">Total Return        267.74%</span>
+<span class="err">CAGR                 15.57%</span>
+<span class="err">Sharpe Ratio           0.84</span>
+<span class="err">Maximum Drawdown     34.28%</span>
+<span class="err">MAR Ratio              0.45</span>
+<span class="c">dtype: object</span>
+</code></pre></div>
+
+<p>Looks like the maximum diversification portfolio achieves a higher sharpe ratio! Although it comes at the cost of signficantly lower total returns. More interesting is the MAR ratio, defined as the CAGR over the maximum drawdown. This is a useful ratio because it gauges how much extra return you are getting for taking on heavier drawdown risk. It looks like large cap US stocks win out on this metric.</p>
+<p>It gives a different perspective than the Sharpe ratio. The Sharpe ratio uses only standard deviation as a metric for risk. This can be very unrealistic because radically different equity curves can actually have the same Sharpe ratio and total return. That can be interestingly illustrated by reordering returns.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Okay, let&#39;s sort VV returns from least to greatest. Note that these are the same returns, just reordered.</span>
+<span class="n">sorted_returns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">vv_returns</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">vv_returns</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">cum_sorted_returns</span> <span class="o">=</span> <span class="n">get_cum_returns</span><span class="p">(</span><span class="n">sorted_returns</span><span class="p">)</span>
+<span class="c1"># Here you can see the cumulative return graphs. The sorted one looks very unusual, but in fact, the total return ends</span>
+<span class="c1"># up exactly the same!</span>
+<span class="n">cum_sorted_returns</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">vv_cum_returns</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f2679e42390&gt;</span>
+</code></pre></div>
+
+<p><img alt="png" src="photos/01_07_2021/output_37_1.png"></p>
+<div class="highlight"><pre><span></span><code><span class="n">total_return</span> <span class="o">=</span> <span class="n">get_total_return</span><span class="p">(</span><span class="n">sorted_returns</span><span class="p">)</span>
+<span class="n">cagr</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_return</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">9</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">sharpe</span> <span class="o">=</span> <span class="n">backtest_statistics</span><span class="o">.</span><span class="n">sharpe_ratio</span><span class="p">(</span><span class="n">sorted_returns</span><span class="p">)</span>
+<span class="n">drawdown</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">backtest_statistics</span><span class="o">.</span><span class="n">drawdown_and_time_under_water</span><span class="p">(</span><span class="n">cum_sorted_returns</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">mar_ratio</span> <span class="o">=</span> <span class="n">cagr</span> <span class="o">/</span> <span class="n">drawdown</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="s1">&#39;Total Return&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">total_return</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span><span class="s1">&#39;CAGR&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">cagr</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span> 
+           <span class="s1">&#39;Sharpe Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">sharpe</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;Maximum Drawdown&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">drawdown</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;MAR Ratio&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">mar_ratio</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="err">Total Return        267.74%</span>
+<span class="err">CAGR                 15.57%</span>
+<span class="err">Sharpe Ratio           0.84</span>
+<span class="err">Maximum Drawdown     99.97%</span>
+<span class="err">MAR Ratio              0.16</span>
+<span class="c">dtype: object</span>
+</code></pre></div>
+
+<p>As you can see the total return, CAGR, and Sharpe ratio are all the same as the original return series! But the maximum drawdown is <em>significantly</em> higher. Obviously this is a worst case scenario, but it shows how drawdowns can drastically affect your portfolio performance over time. Volatility by itself doesn't reflect all kinds of risk because it ignores path dependency. This again is a topic worth covering in more detail at a later date.</p>
+<h1>Conclusions</h1>
+<hr>
+<p>Even considering the backtest and attributes of this simple strategy shows deep complexity. In future, I want to compare this optimization strategy to others like the traditional mean-variance approach, hierarchical risk parity, minimum variance, and others. Along with that is discussing extensions like using models to provide forecasts for asset volatility and correlation.</p>
+<p>So with all those things to think about, see you next time!</p>
+  </div>
+  <div class="tag-cloud">
+    <p>
+    </p>
+  </div>
+
+
+
+
+
+</article>
+
+    <footer>
+<p>&copy; 2020 Erik Dains</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+</p>    </footer>
+  </main>
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " Optionally Bayes ",
+  "url" : "https://eadains.github.io/OptionallyBayes",
+  "image": "",
+  "description": ""
+}
+</script>
+
+
+</body>
+</html>
