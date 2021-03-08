@@ -32,7 +32,7 @@
 <meta name="keywords" content="volatility, realized-volatility">
 
 
-<meta property="og:site_name" content="Optionally Bayes"/>
+<meta property="og:site_name" content="Erik's Blog"/>
 <meta property="og:title" content="Comparison of Volatility Estimators"/>
 <meta property="og:description" content="Comparing Garman-Klass estimator to 5-minute Realized Volatility estimator."/>
 <meta property="og:locale" content="en_US"/>
@@ -46,21 +46,21 @@
 <meta property="article:tag" content="realized-volatility"/>
 <meta property="og:image" content="">
 
-  <title>Optionally Bayes &ndash; Comparison of Volatility Estimators</title>
+  <title>Erik's Blog &ndash; Comparison of Volatility Estimators</title>
 
 </head>
 <body class="light-theme">
   <aside>
     <div>
       <a href="https://eadains.github.io/OptionallyBayes">
-        <img src="https://eadains.github.io/OptionallyBayes/theme/img/profile.png" alt="Optionally Bayes" title="Optionally Bayes">
+        <img src="https://eadains.github.io/OptionallyBayes/theme/img/profile.png" alt="Erik's Blog" title="Erik's Blog">
       </a>
 
       <h1>
-        <a href="https://eadains.github.io/OptionallyBayes">Optionally Bayes</a>
+        <a href="https://eadains.github.io/OptionallyBayes">Erik's Blog</a>
       </h1>
 
-<p>My journey in stock market trading and Bayesian statistics.</p>
+<p>My journey in life and math. Anything goes.</p>
 
 
       <ul class="social">
@@ -317,7 +317,7 @@
 <p>$ f = 0.73 $, percentage of the day trading is closed based on NYSE hours of 9:30 to 4</p>
 <p>$ a = 0.12 $, as they suggest in the paper</p>
 <p>$ \sigma^2_{unadj} = 0.511(u - d)^2 - 0.019(c(u+d) - 2ud) - 0.383c^2 $</p>
-<p>$ \sigma^2_{adj} = 0.12\frac{(O_{1} - C_{0})^2}{0.73} + 0.12\frac{\sigma^2_{unadj}}{0.27}$</p>
+<p><span class="math">\( \sigma^2_{adj} = 0.12\frac{(O_{1} - C_{0})^2}{0.73} + 0.12\frac{\sigma^2_{unadj}}{0.27}\)</span></p>
 <p>Where,</p>
 <p>$ u = H_{1} - O_{1} $, the normalized high</p>
 <p>$ d = L_{1} - O_{1} $, the normalized low</p>
@@ -348,7 +348,7 @@
 <p><img alt="png" src="https://eadains.github.io/OptionallyBayes/photos/03_07_2021/output_13_1.png"></p>
 <h3>Realized Volatility Estimator</h3>
 <p>This estimator is very simply and has become more prominent in the literature in the last few years because of increasing availability of higher-frequency data. Based on (Liu, Patton, and Sheppard, 2012), it's hard to beat a 5-minute RV. Here, I'm going to use a 1-minute estimator, which is also shown to be effective.</p>
-<p>$ RV_{t} = \sum_{k=1}^n r_{t,k}^2 $, where the $t$ index is each day, and the $k$ index represents each intraday return</p>
+<p><span class="math">\( RV_{t} = \sum_{k=1}^n r_{t,k}^2 $, where the $t\)</span> index is each day, and the <span class="math">\(k\)</span> index represents each intraday return</p>
 <p>For daily volatility, it's simply a sum of squared returns from within that day. So in this case we calculate returns for each 1 minute period, square them, and they sum them for each day.</p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">rv_calc</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
     <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
@@ -450,8 +450,68 @@
 <p>Molnár, P. (2015). Properties of Range-Based Volatility Estimators. SSRN. Retrieved from https://ssrn.com/abstract=2691435</p>
 </li>
 </ul>
-<div class="highlight"><pre><span></span><code>
-</code></pre></div>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
   </div>
   <div class="tag-cloud">
     <p>
@@ -480,7 +540,7 @@ Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a 
 {
   "@context" : "http://schema.org",
   "@type" : "Blog",
-  "name": " Optionally Bayes ",
+  "name": " Erik's Blog ",
   "url" : "https://eadains.github.io/OptionallyBayes",
   "image": "",
   "description": ""
