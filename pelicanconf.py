@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*- #
 
 AUTHOR = "Erik Dains"
-SITENAME = "Erik's Blog"
-SITETITLE = "Erik's Blog"
+SITENAME = "Optionally Bayes"
+SITETITLE = "Optionally Bayes"
 SITESUBTITLE = "My journey in life and math. Anything goes."
 SITEURL = "https://eadains.github.io/OptionallyBayes"
 PATH = "content"
