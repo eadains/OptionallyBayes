@@ -1,0 +1,458 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/stylesheet/style.min.css">
+
+
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+          href="https://eadains.github.io/OptionallyBayes/theme/pygments/github.min.css">
+
+
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/solid.css">
+
+
+
+
+
+
+
+<meta name="author" content="Erik Dains" />
+<meta name="description" content="Using a simple bayesian autoregressive model to forecast future volatility" />
+<meta name="keywords" content="volatility, forecasting, bayesian, model-building">
+
+
+<meta property="og:site_name" content="Optionally Bayes"/>
+<meta property="og:title" content="Bayesian Autoregressive Volatility Forecasting"/>
+<meta property="og:description" content="Using a simple bayesian autoregressive model to forecast future volatility"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="https://eadains.github.io/OptionallyBayes/vol_linear_model.html"/>
+<meta property="og:type" content="article"/>
+<meta property="article:published_time" content="2021-03-17 00:00:00-05:00"/>
+<meta property="article:modified_time" content=""/>
+<meta property="article:author" content="https://eadains.github.io/OptionallyBayes/author/erik-dains.html">
+<meta property="article:section" content="Volatility"/>
+<meta property="article:tag" content="volatility"/>
+<meta property="article:tag" content="forecasting"/>
+<meta property="article:tag" content="bayesian"/>
+<meta property="article:tag" content="model-building"/>
+<meta property="og:image" content="">
+
+  <title>Optionally Bayes &ndash; Bayesian Autoregressive Volatility Forecasting</title>
+
+</head>
+<body class="light-theme">
+  <aside>
+    <div>
+      <a href="https://eadains.github.io/OptionallyBayes">
+        <img src="https://eadains.github.io/OptionallyBayes/theme/img/profile.png" alt="Optionally Bayes" title="Optionally Bayes">
+      </a>
+
+      <h1>
+        <a href="https://eadains.github.io/OptionallyBayes">Optionally Bayes</a>
+      </h1>
+
+<p>My journey in life and math. Anything goes.</p>
+
+
+      <ul class="social">
+          <li>
+            <a  class="sc-github" href="https://github.com/eadains" target="_blank">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-instagram" href="https://www.instagram.com/erikdains/" target="_blank">
+              <i class="fab fa-instagram"></i>
+            </a>
+          </li>
+      </ul>
+    </div>
+
+  </aside>
+  <main>
+
+    <nav>
+      <a href="https://eadains.github.io/OptionallyBayes">Home</a>
+
+      <a href="archives.html">Archives</a>
+      <a href="categories.html">Categories</a>
+      <a href="tags.html">Tags</a>
+
+
+    </nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="vol_linear_model">Bayesian Autoregressive Volatility Forecasting</h1>
+    <p>
+      Posted on Wed 17 March 2021 in <a href="https://eadains.github.io/OptionallyBayes/category/volatility.html">Volatility</a>
+
+    </p>
+  </header>
+
+
+  <div>
+    <hr>
+<p>So now that I've decided that I'm going to use 1-min RV as my volatility proxy, I can move on to the juicy part: forecasting.</p>
+<h1>The Data</h1>
+<hr>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+
+<span class="c1"># Set default figure size</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.figsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">plotting</span><span class="o">.</span><span class="n">register_matplotlib_converters</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Here&#39;s my minute data for the S&amp;P 500</span>
+<span class="n">spx_minute</span> <span class="o">=</span> <span class="n">minute</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;SPX_1min.csv&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="s1">&#39;open&#39;</span><span class="p">,</span> <span class="s1">&#39;high&#39;</span><span class="p">,</span> <span class="s1">&#39;low&#39;</span><span class="p">,</span> <span class="s1">&#39;close&#39;</span><span class="p">],</span>
+                                  <span class="n">index_col</span><span class="o">=</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># Here&#39;s the function for calculating the 1-min RV, as discussed in my last post</span>
+<span class="k">def</span> <span class="nf">rv_calc</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">date</span><span class="p">):</span>
+        <span class="n">returns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;close&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;close&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">returns</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">spx_rv</span> <span class="o">=</span> <span class="n">rv_calc</span><span class="p">(</span><span class="n">spx_minute</span><span class="p">)</span>
+</code></pre></div>
+
+<h1>The Model</h1>
+<p>My goal is to predict the volatility over the next week, or 5 trading days, with the past 5 days of daily volatility. This means my independent variables will be the last 5 days of volatility, and my dependent variable is the realized volatility over the next 5 days. For the sake of increased samples, I'm going to create a rolling 5-day window of volatility and shift it 5 periods backwards and use that as the dependent variable. This means I can create a 5-day volatility forecast for each day, rather than each week.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">create_lags</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">lags</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a dataframe with lagged values of the given series.</span>
+<span class="sd">    Generates columns named x_{n} which means the value of each row is the value of the original series lagged n times</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">series</span>
+    <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lags</span><span class="p">):</span>
+        <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">shift</span><span class="p">((</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">dep_var</span> <span class="o">=</span> <span class="n">spx_rv</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="n">indep_var</span> <span class="o">=</span> <span class="n">create_lags</span><span class="p">(</span><span class="n">spx_rv</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="c1"># This ensures that we only keep rows that occur in each set. This means their length is the same and</span>
+<span class="c1"># rows match up properly</span>
+<span class="n">common_index</span> <span class="o">=</span> <span class="n">dep_var</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">indep_var</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">dep_var</span> <span class="o">=</span> <span class="n">dep_var</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">common_index</span><span class="p">]</span>
+<span class="n">indep_var</span> <span class="o">=</span> <span class="n">indep_var</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">common_index</span><span class="p">]</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># I&#39;m going to take the log of the variance because it has better distributional qualities</span>
+<span class="n">dep_var</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">dep_var</span><span class="p">)</span>
+<span class="n">indep_var</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">indep_var</span><span class="p">)</span>
+</code></pre></div>
+
+<p>I'm going to use a very simple Bayesian linear regression for this model. It assumes the data is distributed according to</p>
+<p><span class="math">\(y \sim normal(\mu + X\beta, \sigma)\)</span></p>
+<p>where <span class="math">\(\mu\)</span> is a constant, <span class="math">\(X\)</span> are the independent variables, <span class="math">\(\beta\)</span> are the regression coeffcicents, and <span class="math">\(\sigma\)</span> is the noise term.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pystan</span> <span class="k">as</span> <span class="nn">stan</span>
+<span class="kn">import</span> <span class="nn">arviz</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">model_spec</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">data {</span>
+<span class="s1">    int len;</span>
+<span class="s1">    int vars;</span>
+<span class="s1">    vector[len] dep_var;</span>
+<span class="s1">    matrix[len, vars] indep_var;</span>
+<span class="s1">}</span>
+<span class="s1">parameters {</span>
+<span class="s1">    real mu;</span>
+<span class="s1">    vector[vars] beta;</span>
+<span class="s1">    real&lt;lower=0&gt; sigma;</span>
+<span class="s1">}</span>
+<span class="s1">model {</span>
+<span class="s1">    mu ~ cauchy(0, 10);</span>
+<span class="s1">    beta ~ cauchy(0, 10);</span>
+<span class="s1">    sigma ~ cauchy(0, 5);</span>
+
+<span class="s1">    dep_var ~ normal(mu + (indep_var * beta), sigma);</span>
+<span class="s1">}</span>
+<span class="s1">&#39;&#39;&#39;</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">stan</span><span class="o">.</span><span class="n">StanModel</span><span class="p">(</span><span class="n">model_code</span><span class="o">=</span><span class="n">model_spec</span><span class="p">)</span>
+</code></pre></div>
+
+<h1>Model Testing and Verification</h1>
+<p>Okay, let's do some out of sample testing to see how our model does! Below, I'm defining the training and testing sets. I'm going to use 75% of the data for in-sample fitting and the remaining 25% for out-of-sample testing.</p>
+<div class="highlight"><pre><span></span><code><span class="n">test_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indep_var</span><span class="p">)</span> <span class="o">*</span> <span class="o">.</span><span class="mi">75</span><span class="p">)</span>
+<span class="n">train_x</span> <span class="o">=</span> <span class="n">indep_var</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">test_index</span><span class="p">]</span>
+<span class="n">train_y</span> <span class="o">=</span> <span class="n">dep_var</span><span class="p">[:</span><span class="n">test_index</span><span class="p">]</span>
+<span class="n">test_x</span> <span class="o">=</span> <span class="n">indep_var</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">test_index</span><span class="p">:]</span>
+<span class="n">test_y</span> <span class="o">=</span> <span class="n">dep_var</span><span class="p">[</span><span class="n">test_index</span><span class="p">:]</span>
+</code></pre></div>
+
+<p>Now, I fit the model to the data.</p>
+<div class="highlight"><pre><span></span><code><span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;len&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_x</span><span class="p">),</span> <span class="s1">&#39;vars&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="s1">&#39;dep_var&#39;</span><span class="p">:</span> <span class="n">train_y</span><span class="p">,</span> <span class="s1">&#39;indep_var&#39;</span><span class="p">:</span> <span class="n">train_x</span><span class="p">}</span>
+
+<span class="n">sample</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sampling</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=</span><span class="mi">1500</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Let's check our sampling statistics to ensure the sampler converged. R-hats all look very good and our effective samples also look good.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">stansummary</span><span class="p">(</span><span class="n">pars</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">]))</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    Inference for Stan model: anon_model_842ef31b1beae12ccaeb1a8773757520.
+    4 chains, each with iter=1500; warmup=250; thin=1; 
+    post-warmup draws per chain=1250, total post-warmup draws=5000.
+
+              mean se_mean     sd   2.5%    25%    50%    75%  97.5%  n_eff   Rhat
+    mu        0.59  1.2e-3   0.09   0.42   0.53   0.59   0.65   0.77   5682    1.0
+    beta[1]   0.46  3.4e-4   0.02   0.42   0.45   0.46   0.47    0.5   3219    1.0
+    beta[2]   0.14  4.5e-4   0.02    0.1   0.13   0.14   0.16   0.18   2408    1.0
+    beta[3]   0.09  3.9e-4   0.02   0.04   0.07   0.09    0.1   0.13   3317    1.0
+    beta[4]   0.08  3.7e-4   0.02   0.03   0.06   0.08   0.09   0.12   3753    1.0
+    beta[5]   0.06  4.1e-4   0.02   0.01   0.04   0.06   0.07    0.1   2966    1.0
+    beta[6]   0.07  3.0e-4   0.02   0.03   0.06   0.07   0.08   0.11   4026    1.0
+    sigma     0.49  9.5e-5 6.9e-3   0.48   0.49   0.49    0.5   0.51   5295    1.0
+
+    Samples were drawn using NUTS at Wed Mar 17 19:28:01 2021.
+    For each parameter, n_eff is a crude measure of effective sample size,
+    and Rhat is the potential scale reduction factor on split chains (at 
+    convergence, Rhat=1).
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">arviz_data</span> <span class="o">=</span> <span class="n">arviz</span><span class="o">.</span><span class="n">from_pystan</span><span class="p">(</span>
+    <span class="n">posterior</span><span class="o">=</span><span class="n">sample</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>We can look at trace plots for our samples. Good samples should look like fuzzy caterpillars, which is what we see here. The distributions also match across sampling chains. The variables also match our intuition: <span class="math">\(\mu\)</span> and <span class="math">\(\beta\)</span> are positive, and the regression coefficients are all positive.</p>
+<div class="highlight"><pre><span></span><code><span class="n">arviz</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">arviz_data</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">])</span>
+</code></pre></div>
+
+<p><img alt="png" src="https://eadains.github.io/OptionallyBayes/photos/03_17_2021/output_24_1.png"></p>
+<p>The code below creates the posterior predictive distribution for the in-sample and out-of-sample data. These represent what the model predicts the distribution of the data is. The job now is to compare this predicted distribution to the reality.</p>
+<div class="highlight"><pre><span></span><code><span class="n">mu</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+<span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;beta&#39;</span><span class="p">]</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="c1"># This is some tensordot sorcery that works, but that I don&#39;t frankly understand. It takes the matrix product of train_x</span>
+<span class="c1"># and beta over each row of beta. Essentially a higher-dimensional version of what the model does.</span>
+<span class="n">train_post</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))),</span> <span class="n">sigma</span><span class="p">)</span>
+<span class="n">test_post</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">test_x</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))),</span> <span class="n">sigma</span><span class="p">)</span>
+
+<span class="n">train_post_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">train_post</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">test_post_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">test_post</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Let's take a look at the in-sample and out-of-sample residuals. In this case, I'm making a point estimate by taking the mean of the posterior predictive distribution. It's obvious that the model has problems predicting volatility jumps, signified by unexpected jumps in the residuals.</p>
+<div class="highlight"><pre><span></span><code><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">train_y</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">train_post_mean</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Residual&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;In-Sample Residuals&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><img alt="png" src="https://eadains.github.io/OptionallyBayes/photos/03_17_2021/output_29_1.png"></p>
+<div class="highlight"><pre><span></span><code><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_y</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_post_mean</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Residual&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Out-of-Sample Residuals&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><img alt="png" src="https://eadains.github.io/OptionallyBayes/photos/03_17_2021/output_30_1.png"></p>
+<p>Now, let's look at the root mean square error of our model. Looks like our out-of-sample RMSE, using exponentiated values, is around 7% higher, not bad!</p>
+<div class="highlight"><pre><span></span><code><span class="n">train_rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">train_y</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">train_post_mean</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">test_rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_y</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_post_mean</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;In-Sample RMSE: </span><span class="si">{</span><span class="n">train_rmse</span><span class="si">}</span><span class="se">\n</span><span class="s1">Out-of-Sample RMSE: </span><span class="si">{</span><span class="n">test_rmse</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Percent Increase: </span><span class="si">{</span><span class="p">(</span><span class="n">test_rmse</span> <span class="o">/</span> <span class="n">train_rmse</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    In-Sample RMSE: 0.0006314456099670146
+    Out-of-Sample RMSE: 0.0006745751839390536
+    Percent Increase: 0.06830291206600037
+</code></pre></div>
+
+<p>I like to do a Mincer-Zarnowitz regression to analyze out-of-sample forests. In this case, the out-of-sample predictions are treated as the independent variable and the true values are the dependent variable. The R-Squared for out model is about 64%, which means our out-of-sample predictions explain 64% of the variance of the true values. Not bad! The intercept is also very close to zero, which means our prediction isn't biased.</p>
+<div class="highlight"><pre><span></span><code><span class="n">regress</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">linregress</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_post_mean</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_y</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Intercept: </span><span class="si">{</span><span class="n">regress</span><span class="o">.</span><span class="n">intercept</span><span class="si">}</span><span class="s1"> </span><span class="se">\n</span><span class="s1">Slope: </span><span class="si">{</span><span class="n">regress</span><span class="o">.</span><span class="n">slope</span><span class="si">}</span><span class="s1"> </span><span class="se">\n</span><span class="s1">R-Squared: </span><span class="si">{</span><span class="n">regress</span><span class="o">.</span><span class="n">rvalue</span><span class="o">**</span><span class="mi">2</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    Intercept: 1.7250208362578126e-05 
+    Slope: 1.183989352654772 
+    R-Squared: 0.6438180914963003
+</code></pre></div>
+
+<p>Next, I want to check the distributional assumptions. Specifically, I want to know how many times real volatility exceeds what our distribution predicts. To do this, I'm going to look at the posterior predictive distribution, which should, if our model is correct, accurately predict the distribution of the real data. I'll figure out the 95th percentile of the posterior predictive, and see how many times real volatility exceeded that. We should expect exceedances to happen about 5% of the time.</p>
+<div class="highlight"><pre><span></span><code><span class="n">upper_bound_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">train_post</span><span class="p">),</span> <span class="mi">95</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">num_exceeds_train</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">train_y</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">upper_bound_train</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+<span class="n">upper_bound_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_post</span><span class="p">),</span> <span class="mi">95</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">num_exceeds_test</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_y</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">upper_bound_test</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;In-Sample Exceedances: </span><span class="si">{</span><span class="n">num_exceeds_train</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">upper_bound_train</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Out-of-Sample Exceedances: </span><span class="si">{</span><span class="n">num_exceeds_test</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">upper_bound_test</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    In-Sample Exceedances: 0.0481139337952271
+    Out-of-Sample Exceedances: 0.09815242494226328
+</code></pre></div>
+
+<p>In-sample we are within 5%, and out-of-sample we are above 5% by about double, which isn't a good sign. Next up is testing the empirical distribution of the data. If our posterior predictive distribution is a good representation of the underlying distribution, doing a probability integral transform should transform the data into a uniform distribution.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ECDF</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sorted</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sorted</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sorted</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sorted</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sorted</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_post</span><span class="p">)):</span>
+    <span class="n">ecdf</span> <span class="o">=</span> <span class="n">ECDF</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_post</span><span class="p">[</span><span class="n">x</span><span class="p">]))</span>
+    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ecdf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">test_y</span><span class="p">[</span><span class="n">x</span><span class="p">])))</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Transformed Data&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><img alt="png" src="https://eadains.github.io/OptionallyBayes/photos/03_17_2021/output_41_1.png"></p>
+<p>We can see an obvious deviation from the expected uniform distribution here. It looks like our distribution most significantly under-predicts large volatiltiy values. This makes sense when looking back to the residual graph, large jumps aren't handled well.</p>
+<div class="highlight"><pre><span></span><code><span class="n">stats</span><span class="o">.</span><span class="n">kstest</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="s1">&#39;uniform&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    KstestResult(statistic=0.0760443418013857, pvalue=8.408548699568476e-05)
+</code></pre></div>
+
+<p>This Kolmogorov-Smirnov test takes the null hypothesis that the data matches the specified distribution, in this case a uniform. It looks like we can handedly reject that hypothesis. This means that the posterior predictive is not fully capable of representing the real distribution.</p>
+<h1>Conclusion and Extensions</h1>
+<p>It seems like this very simple model does pretty well providing a point-forecast of future volatility, however it fails at accurately describing the distribution of future volatility. This could be fixed in several ways. First is assuming a different distributional form in the model, such as something with fatter tails like a Student's T. Another possibility is allowing the standard deviation of the normal to vary with time. That is more in line with models like traditional stochastic volatility.</p>
+<div class="highlight"><pre><span></span><code>
+</code></pre></div>
+
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="https://eadains.github.io/OptionallyBayes/tag/volatility.html">volatility</a>
+      <a href="https://eadains.github.io/OptionallyBayes/tag/forecasting.html">forecasting</a>
+      <a href="https://eadains.github.io/OptionallyBayes/tag/bayesian.html">bayesian</a>
+      <a href="https://eadains.github.io/OptionallyBayes/tag/model-building.html">model-building</a>
+    </p>
+  </div>
+
+
+
+
+
+</article>
+
+    <footer>
+<p>&copy; 2020 Erik Dains</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+</p>    </footer>
+  </main>
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " Optionally Bayes ",
+  "url" : "https://eadains.github.io/OptionallyBayes",
+  "image": "",
+  "description": ""
+}
+</script>
+
+
+</body>
+</html>
