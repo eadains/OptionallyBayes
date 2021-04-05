@@ -10,13 +10,13 @@ PATH = "content"
 MAIN_MENU = True
 COPYRIGHT_NAME = "Erik Dains"
 COPYRIGHT_YEAR = "2020"
-# SITELOGO = SITEURL + "/images/integral_logo.png"
+SITELOGO = "/photos/headshot.jpg"
 
 TIMEZONE = "America/Chicago"
 
 DEFAULT_LANG = "en"
 
-THEME = "/home/eadains/flex_theme"
+THEME = "/home/eadains/Flex"
 
 # Feed generation is usually not desired when developing
 FEED_ALL_ATOM = None
@@ -34,7 +34,8 @@ AUTHOR_FEED_RSS = None
 # Social widget
 SOCIAL = (
     ("github", "https://github.com/eadains"),
-    ("instagram", "https://www.instagram.com/erikdains/")
+    ("instagram", "https://www.instagram.com/erikdains/"),
+    ("linkedin", "https://www.linkedin.com/in/erik-dains/")
 )
 
 MENUITEMS = (
