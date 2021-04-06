@@ -10,7 +10,7 @@ PATH = "content"
 MAIN_MENU = True
 COPYRIGHT_NAME = "Erik Dains"
 COPYRIGHT_YEAR = "2020"
-SITELOGO = "/photos/headshot.jpg"
+SITELOGO = SITEURL + "/photos/headshot.jpg"
 
 TIMEZONE = "America/Chicago"
 
@@ -26,7 +26,7 @@ AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
 
 # Blogroll
-#LINKS = (("Pelican", "https://getpelican.com/"),
+# LINKS = (("Pelican", "https://getpelican.com/"),
 #         ("Python.org", "https://www.python.org/"),
 #         ("Jinja2", "https://palletsprojects.com/p/jinja/"),
 #         ("You can modify those links in your config file", "#"),)
@@ -35,16 +35,16 @@ AUTHOR_FEED_RSS = None
 SOCIAL = (
     ("github", "https://github.com/eadains"),
     ("instagram", "https://www.instagram.com/erikdains/"),
-    ("linkedin", "https://www.linkedin.com/in/erik-dains/")
+    ("linkedin", "https://www.linkedin.com/in/erik-dains/"),
 )
 
 MENUITEMS = (
     ("Archives", "archives.html"),
     ("Categories", "categories.html"),
-    ("Tags", "tags.html")
+    ("Tags", "tags.html"),
 )
 
 DEFAULT_PAGINATION = 10
 
 # Uncomment following line if you want document-relative URLs when developing
-#RELATIVE_URLS = True
+# RELATIVE_URLS = True
