@@ -175,8 +175,8 @@
 </code></pre></div>
 
 <p>I'm going to use a very simple Bayesian linear regression for this model. It assumes the data is distributed according to</p>
-<p>$y \sim normal(\mu + X\beta, \sigma)$</p>
-<p>where $\mu$ is a constant, $X$ are the independent variables, $\beta$ are the regression coeffcicents, and $\sigma$ is the noise term.</p>
+<p>$ y \sim normal(\mu + X\beta, \sigma) $</p>
+<p>where $ \mu $ is a constant, $ X $ are the independent variables, $ \beta $ are the regression coeffcicents, and $ \sigma $ is the noise term.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pystan</span> <span class="k">as</span> <span class="nn">stan</span>
 <span class="kn">import</span> <span class="nn">arviz</span>
 </code></pre></div>
@@ -250,7 +250,7 @@
 <span class="p">)</span>
 </code></pre></div>
 
-<p>We can look at trace plots for our samples. Good samples should look like fuzzy caterpillars, which is what we see here. The distributions also match across sampling chains. The variables also match our intuition: $\mu$ and $\beta$ are positive, and the regression coefficients are all positive.</p>
+<p>We can look at trace plots for our samples. Good samples should look like fuzzy caterpillars, which is what we see here. The distributions also match across sampling chains. The variables also match our intuition: $ \mu $ and $ \beta $ are positive, and the regression coefficients are all positive.</p>
 <div class="highlight"><pre><span></span><code><span class="n">arviz</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">arviz_data</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">])</span>
 </code></pre></div>
 
