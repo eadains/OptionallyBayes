@@ -175,8 +175,8 @@
 </code></pre></div>
 
 <p>I'm going to use a very simple Bayesian linear regression for this model. It assumes the data is distributed according to</p>
-<p>$ y \sim normal(\mu + X\beta, \sigma) $</p>
-<p>where $ \mu $ is a constant, $ X $ are the independent variables, $ \beta $ are the regression coeffcicents, and $ \sigma $ is the noise term.</p>
+<p><span class="math">\(y \sim normal(\mu + X\beta, \sigma)\)</span></p>
+<p>where <span class="math">\(\mu\)</span> is a constant, <span class="math">\(X\)</span> are the independent variables, <span class="math">\(\beta\)</span> are the regression coeffcicents, and <span class="math">\(\sigma\)</span> is the noise term.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pystan</span> <span class="k">as</span> <span class="nn">stan</span>
 <span class="kn">import</span> <span class="nn">arviz</span>
 </code></pre></div>
@@ -250,7 +250,7 @@
 <span class="p">)</span>
 </code></pre></div>
 
-<p>We can look at trace plots for our samples. Good samples should look like fuzzy caterpillars, which is what we see here. The distributions also match across sampling chains. The variables also match our intuition: $ \mu $ and $ \beta $ are positive, and the regression coefficients are all positive.</p>
+<p>We can look at trace plots for our samples. Good samples should look like fuzzy caterpillars, which is what we see here. The distributions also match across sampling chains. The variables also match our intuition: <span class="math">\(\mu\)</span> and <span class="math">\(\beta\)</span> are positive, and the regression coefficients are all positive.</p>
 <div class="highlight"><pre><span></span><code><span class="n">arviz</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">arviz_data</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">])</span>
 </code></pre></div>
 
@@ -357,6 +357,68 @@
 <p>This Kolmogorov-Smirnov test takes the null hypothesis that the data matches the specified distribution, in this case a uniform. It looks like we can handedly reject that hypothesis. This means that the posterior predictive is not fully capable of representing the real distribution.</p>
 <h1>Conclusion and Extensions</h1>
 <p>It seems like this very simple model does pretty well providing a point-forecast of future volatility, however it fails at accurately describing the distribution of future volatility. This could be fixed in several ways. First is assuming a different distributional form in the model, such as something with fatter tails like a Student's T. Another possibility is allowing the standard deviation of the normal to vary with time. That is more in line with models like traditional stochastic volatility.</p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
   </div>
   <div class="tag-cloud">
     <p>
