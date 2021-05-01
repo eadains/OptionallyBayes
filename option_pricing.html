@@ -1,0 +1,419 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/stylesheet/style.min.css">
+
+
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+          href="https://eadains.github.io/OptionallyBayes/theme/pygments/github.min.css">
+
+
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="https://eadains.github.io/OptionallyBayes/theme/font-awesome/css/solid.css">
+
+
+
+
+
+  
+
+
+<meta name="author" content="Erik Dains" />
+<meta name="description" content="Using PyTorch to easily compute Option Greeks first using Black-Scholes and then Monte Carlo methods." />
+<meta name="keywords" content="pricing, pytorch, monte-carlo">
+
+
+<meta property="og:site_name" content="Optionally Bayes"/>
+<meta property="og:title" content="Monte Carlo Methods for Option Pricing and Greeks"/>
+<meta property="og:description" content="Using PyTorch to easily compute Option Greeks first using Black-Scholes and then Monte Carlo methods."/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="https://eadains.github.io/OptionallyBayes/option_pricing.html"/>
+<meta property="og:type" content="article"/>
+<meta property="article:published_time" content="2021-05-01 00:00:00-05:00"/>
+<meta property="article:modified_time" content=""/>
+<meta property="article:author" content="https://eadains.github.io/OptionallyBayes/author/erik-dains.html">
+<meta property="article:section" content="Options"/>
+<meta property="article:tag" content="pricing"/>
+<meta property="article:tag" content="pytorch"/>
+<meta property="article:tag" content="monte-carlo"/>
+<meta property="og:image" content="https://eadains.github.io/OptionallyBayes/photos/headshot.jpg">
+
+  <title>Optionally Bayes &ndash; Monte Carlo Methods for Option Pricing and Greeks</title>
+
+</head>
+<body class="light-theme">
+  <aside>
+    <div>
+      <a href="https://eadains.github.io/OptionallyBayes">
+        <img src="https://eadains.github.io/OptionallyBayes/photos/headshot.jpg" alt="Optionally Bayes" title="Optionally Bayes">
+      </a>
+
+      <h1>
+        <a href="https://eadains.github.io/OptionallyBayes">Optionally Bayes</a>
+      </h1>
+
+<p>My journey in life and math. Anything goes.</p>
+
+
+      <ul class="social">
+          <li>
+            <a  class="sc-github" href="https://github.com/eadains" target="_blank">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-instagram" href="https://www.instagram.com/erikdains/" target="_blank">
+              <i class="fab fa-instagram"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-linkedin" href="https://www.linkedin.com/in/erik-dains/" target="_blank">
+              <i class="fab fa-linkedin"></i>
+            </a>
+          </li>
+      </ul>
+    </div>
+
+  </aside>
+  <main>
+
+    <nav>
+      <a href="https://eadains.github.io/OptionallyBayes">Home</a>
+
+      <a href="archives.html">Archives</a>
+      <a href="categories.html">Categories</a>
+      <a href="tags.html">Tags</a>
+
+
+    </nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="option_pricing">Monte Carlo Methods for Option Pricing and Greeks</h1>
+    <p>
+      Posted on Sat 01 May 2021 in <a href="https://eadains.github.io/OptionallyBayes/category/options.html">Options</a>
+
+    </p>
+  </header>
+
+
+  <div>
+    <hr>
+<p>Alright, in this post I'm going to run through how to price options using Monte Carlo methods and also compute the associated greeks using automatic differentiation in PyTorch.</p>
+<h1>Black-Scholes</h1>
+<hr>
+<p>First, let's look at implementing the Black-Scholes model in PyTorch.</p>
+<p>The input variables are as follows:</p>
+<p><span class="math">\(K\)</span> : Strike price of the option</p>
+<p><span class="math">\(S(t)\)</span> : Price of the underlying asset at time <span class="math">\(t\)</span></p>
+<p><span class="math">\(t\)</span> : Current time in years.</p>
+<p><span class="math">\(T\)</span> : Time of option expiration</p>
+<p><span class="math">\(\sigma\)</span> : Standard deviation of the underlying <em>returns</em></p>
+<p><span class="math">\(r\)</span> : Annualized risk-free rate</p>
+<p><span class="math">\(N(x)\)</span> : Standard Normal cumulative distribution function</p>
+<p>The price of a call option is given by:</p>
+<p><span class="math">\(C(S_t, t) = N(d_1) S_t - N(d_2) K e^{-r(T-t)}\)</span></p>
+<p><span class="math">\(d_1 = \frac{1}{\sigma\sqrt{T-t}}[\ln(\frac{S_t}{K}) + (r + \frac{\sigma^2}{2})(T-t)]\)</span></p>
+<p><span class="math">\(d_2 = d_1 - \sigma\sqrt{T-t}\)</span></p>
+<p>And by parity the price of a put option is given by:</p>
+<p><span class="math">\(P(S_t, t) = N(-d_2) K e^{-r(T-t)} - N(-d_1) S_t\)</span></p>
+<hr>
+<p>Now, let's implement that using PyTorch functions. For simplicity I replace <span class="math">\(T\)</span> and <span class="math">\(t\)</span> and their difference by a single term <span class="math">\(T\)</span> specifying the total time left to expiry in years.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
+
+<span class="n">std_norm_cdf</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">cdf</span>
+<span class="n">std_norm_pdf</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">bs_price</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+    <span class="n">d_1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">S</span> <span class="o">/</span> <span class="n">K</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span>
+    <span class="n">d_2</span> <span class="o">=</span> <span class="n">d_1</span> <span class="o">-</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">right</span> <span class="o">==</span> <span class="s2">&quot;C&quot;</span><span class="p">:</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">std_norm_cdf</span><span class="p">(</span><span class="n">d_1</span><span class="p">)</span> <span class="o">*</span> <span class="n">S</span> <span class="o">-</span> <span class="n">std_norm_cdf</span><span class="p">(</span><span class="n">d_2</span><span class="p">)</span> <span class="o">*</span> <span class="n">K</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">C</span>
+
+    <span class="k">elif</span> <span class="n">right</span> <span class="o">==</span> <span class="s2">&quot;P&quot;</span><span class="p">:</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">std_norm_cdf</span><span class="p">(</span><span class="o">-</span><span class="n">d_2</span><span class="p">)</span> <span class="o">*</span> <span class="n">K</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span> <span class="o">-</span> <span class="n">std_norm_cdf</span><span class="p">(</span><span class="o">-</span><span class="n">d_1</span><span class="p">)</span> <span class="o">*</span> <span class="n">S</span>
+        <span class="k">return</span> <span class="n">P</span>
+</code></pre></div>
+
+<p>With this function I can calculate the price of a call option with the underyling at 100, strike price at 100, 1 year to expiration, 5% annual volatility, and a risk-free rate of 1% annually.</p>
+<div class="highlight"><pre><span></span><code><span class="n">right</span> <span class="o">=</span> <span class="s2">&quot;C&quot;</span>
+<span class="n">K</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">S</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">price</span> <span class="o">=</span> <span class="n">bs_price</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    tensor(2.5216, grad_fn=&lt;SubBackward0&gt;)
+</code></pre></div>
+
+<p>Now, the magic of PyTorch is that it tracks all of those computations in a graph and can use its automatic differentiation feature to give us all the greeks. That's why I told it that I needed a gradient on all of the input variables.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Tell PyTorch to compute gradients</span>
+<span class="n">price</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delta: </span><span class="si">{</span><span class="n">S</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Vega: </span><span class="si">{</span><span class="n">sigma</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Theta: </span><span class="si">{</span><span class="n">T</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Rho: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    Delta: 0.5890103578567505
+    Vega: 38.89707946777344
+    Theta: 1.536220908164978
+    Rho: 56.379390716552734
+</code></pre></div>
+
+<p>How do these compare to the greeks computed directly by differentiating the Black-Scholes formula?</p>
+<div class="highlight"><pre><span></span><code><span class="n">d_1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">S</span> <span class="o">/</span> <span class="n">K</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span>
+<span class="n">d_2</span> <span class="o">=</span> <span class="n">d_1</span> <span class="o">-</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+
+<span class="n">delta</span> <span class="o">=</span> <span class="n">std_norm_cdf</span><span class="p">(</span><span class="n">d_1</span><span class="p">)</span>
+<span class="n">vega</span> <span class="o">=</span> <span class="n">S</span> <span class="o">*</span> <span class="n">std_norm_pdf</span><span class="p">(</span><span class="n">d_1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+<span class="n">theta</span> <span class="o">=</span> <span class="p">((</span><span class="n">S</span> <span class="o">*</span> <span class="n">std_norm_pdf</span><span class="p">(</span><span class="n">d_1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">)))</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">K</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">std_norm_cdf</span><span class="p">(</span><span class="n">d_2</span><span class="p">)</span>
+<span class="n">rho</span> <span class="o">=</span> <span class="n">K</span> <span class="o">*</span> <span class="n">T</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">std_norm_cdf</span><span class="p">(</span><span class="n">d_2</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delta: </span><span class="si">{</span><span class="n">delta</span><span class="si">}</span><span class="se">\n</span><span class="s2">Vega: </span><span class="si">{</span><span class="n">vega</span><span class="si">}</span><span class="se">\n</span><span class="s2">Theta: </span><span class="si">{</span><span class="n">theta</span><span class="si">}</span><span class="se">\n</span><span class="s2">Rho: </span><span class="si">{</span><span class="n">rho</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    Delta: 0.5890103578567505
+    Vega: 38.89707946777344
+    Theta: 1.5362210273742676
+    Rho: 56.379390716552734
+</code></pre></div>
+
+<p>Exactly the same to a high level of precision! Amazing. It's easy to see how much simpler the PyTorch autograd approach is. Note that it is possible to calculate second-order derivatives like Gamma, it just requires remaking the computation graph. If anyone knows of a workaround to this let me know.</p>
+<div class="highlight"><pre><span></span><code><span class="n">S</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">price</span> <span class="o">=</span> <span class="n">bs_price</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+
+<span class="n">delta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">delta</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Autograd Gamma: </span><span class="si">{</span><span class="n">S</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># And the direct Black-Scholes calculation</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="n">std_norm_pdf</span><span class="p">(</span><span class="n">d_1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">S</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;BS Gamma: </span><span class="si">{</span><span class="n">gamma</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    Autograd Gamma: 0.07779412716627121
+    BS Gamma: 0.0777941569685936
+</code></pre></div>
+
+<h1>Monte Carlo Pricing</h1>
+<hr>
+<p>Now that's all fine, but nothing new except some computation tricks. Black-Scholes makes assumptions that can often violate what is observed in the real world. The problem is creating closed form pricing models under other market dynamics is usually impossible. That's where Monte Carlo sampling comes in. It's a trivial task to create future market paths given a model for its dynamics. You can calculate option payoffs from those paths and get a price. But how can you calculate greeks from Monte Carlo samples? Again, PyTorch and autograd can help.</p>
+<p>I'll use all of the same parameters as in the example above. Let's simulate the result of a Geometric Brownian Motion process after one year, just like Black-Scholes does.</p>
+<div class="highlight"><pre><span></span><code><span class="n">K</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">S</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">Z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">([</span><span class="mi">1000000</span><span class="p">])</span>
+<span class="c1"># Brownian Motion</span>
+<span class="n">W_T</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span>
+<span class="c1"># GBM</span>
+<span class="n">prices</span> <span class="o">=</span> <span class="n">S</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">r</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span> <span class="o">*</span> <span class="n">T</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">W_T</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.figsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Prices&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Occurences&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Distribution of Underlying Price after 1 Year&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><img alt="png" src="https://eadains.github.io/OptionallyBayes/photos/05_01_2021/output_18_1.png"></p>
+<p>Now, let's calculate the option payoffs under each of those future prices, discount them using the risk-free rate, and then take the mean to get the option price. The price calculated with this method is close to the price calculated using Black-Scholes.</p>
+<div class="highlight"><pre><span></span><code><span class="n">payoffs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">prices</span> <span class="o">-</span> <span class="n">K</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000000</span><span class="p">))</span>
+<span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">payoffs</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    tensor(2.5215, grad_fn=&lt;MulBackward0&gt;)
+</code></pre></div>
+
+<p>Now, the magic comes in. The only random sampling I used above was a parameter-less standard normal. This fact allows PyTorch to keep track of gradients throughout all of the calculations above. This is called a Pathwise Derivative. This means we can use autograd just like above to get greeks.</p>
+<div class="highlight"><pre><span></span><code><span class="n">value</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delta: </span><span class="si">{</span><span class="n">S</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Vega: </span><span class="si">{</span><span class="n">sigma</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Theta: </span><span class="si">{</span><span class="n">T</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Rho: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    Delta: 0.5890941023826599
+    Vega: 38.89133834838867
+    Theta: 1.536162257194519
+    Rho: 56.38788604736328
+</code></pre></div>
+
+<p>All the same! This means that we can simulate any Monte Carlo process we want, as long as its random component can be reparameterized, and get prices and greeks. Obviously this is a trivial example, but let's look at a more complicated path-dependent option contract like an Asian Option. This type of option has a payoff based on the <em>average</em> price of the underlying over it's duration, rather than only the price at expiration like a Vanilla Option. This means we must simulate the price movement each day instead of just at the end.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># All the same parameters for the price process</span>
+<span class="n">K</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">S</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">dt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">252</span><span class="p">)</span>
+<span class="n">Z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">([</span><span class="mi">1000000</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">T</span> <span class="o">*</span> <span class="mi">252</span><span class="p">)])</span>
+
+<span class="c1"># Brownian Motion</span>
+<span class="n">W_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1"># GBM</span>
+<span class="n">prices</span> <span class="o">=</span> <span class="n">S</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">r</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span> <span class="o">*</span> <span class="n">T</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">W_t</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">prices</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Number of Days in Future&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Underlying Price&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;One Possible Price path&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">prices</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><img alt="png" src="https://eadains.github.io/OptionallyBayes/photos/05_01_2021/output_26_1.png"></p>
+<p>The payoff of an Asian Option given this price path is the difference between the strike price, the green dashed line, and the daily average price over the year, shown by the dashed red line. In this case, the payoff would be zero because the average daily price is below the strike.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Payoff is now based on mean of underlying price, not terminal value</span>
+<span class="n">payoffs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">K</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000000</span><span class="p">))</span>
+<span class="c1">#payoffs = torch.max(prices[:, -1] - K, torch.zeros(100000))</span>
+<span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">payoffs</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">r</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    tensor(1.6765, grad_fn=&lt;MulBackward0&gt;)
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="n">value</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delta: </span><span class="si">{</span><span class="n">S</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Vega: </span><span class="si">{</span><span class="n">sigma</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Theta: </span><span class="si">{</span><span class="n">T</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="se">\n</span><span class="s2">Rho: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">grad</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><pre><span></span><code>    Delta: 0.6314291954040527
+    Vega: 20.25724220275879
+    Theta: 0.5357358455657959
+    Rho: 61.46644973754883
+</code></pre></div>
+
+<p>PyTorch Autograd once again gives us greeks even though we are now pricing a totally different contract. Awesome!</p>
+<h1>Conclusion</h1>
+<hr>
+<p>Monte Carlo methods provide a way to price options under a much broader range of market process models. However, computing greeks can be challenging, either having to use finite difference methods or calculating pathwise derivatives symbolically. Using PyTorch can mitigate those issues and use automatic differentiation to provide greeks straight out of the box with no real overhead.</p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="https://eadains.github.io/OptionallyBayes/tag/pricing.html">pricing</a>
+      <a href="https://eadains.github.io/OptionallyBayes/tag/pytorch.html">pytorch</a>
+      <a href="https://eadains.github.io/OptionallyBayes/tag/monte-carlo.html">monte-carlo</a>
+    </p>
+  </div>
+
+
+
+
+
+</article>
+
+    <footer>
+<p>&copy; 2020 Erik Dains</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+</p>    </footer>
+  </main>
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " Optionally Bayes ",
+  "url" : "https://eadains.github.io/OptionallyBayes",
+  "image": "https://eadains.github.io/OptionallyBayes/photos/headshot.jpg",
+  "description": ""
+}
+</script>
+
+</body>
+</html>
